@@ -1,5 +1,7 @@
 # StreamdownRN
 
+[![npm version](https://img.shields.io/npm/v/streamdown-rn)](https://www.npmjs.com/package/streamdown-rn)
+
 A React Native streaming markdown renderer based on [Vercel's Streamdown](https://github.com/vercel/streamdown), with powerful enhancements for AI chat applications including **dynamic component injection** and **mobile-first optimizations**.
 
 ## What Makes StreamdownRN Different?
@@ -10,6 +12,7 @@ StreamdownRN brings Vercel's streaming markdown philosophy to React Native, plus
 - LLMs can inject interactive components directly into markdown
 - Runtime component validation with JSON schemas
 - Turn chat into a programmable UI platform
+- Example: AI renders a `TokenCard` component right in the response
 
 **📱 Mobile-First** - Built specifically for React Native:
 - StyleSheet-based theming (not CSS)
@@ -31,7 +34,7 @@ StreamdownRN brings Vercel's streaming markdown philosophy to React Native, plus
 
 ## Why StreamdownRN?
 
-Traditional markdown renderers break when you stream incomplete content from AI models. Vercel's Streamdown solved this for ReactJS. StreamdownRN brings the same elegance to React Native (including React Native Web!), with additional innovations for AI-powered chat interfaces.
+Traditional markdown renderers break when you stream incomplete content from AI models. Vercel's Streamdown solved this for React web. StreamdownRN brings the same elegance to React Native, with additional innovations for AI-powered chat interfaces.
 
 ## Installation
 
@@ -208,6 +211,12 @@ contract SimpleToken {
 
 <StreamdownRN>{codeContent}</StreamdownRN>
 ```
+
+## Requirements
+
+- Node.js >= 18
+- React >= 18.0.0
+- React Native >= 0.70.0
 
 ## Roadmap
 
