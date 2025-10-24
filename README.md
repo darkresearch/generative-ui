@@ -214,9 +214,9 @@ contract SimpleToken {
 
 ## Requirements
 
-- Node.js >= 18
-- React >= 18.0.0
-- React Native >= 0.70.0
+- **Node.js** >= 18
+- **React** >= 18.0.0
+- **React Native** >= 0.70.0
 
 ## Roadmap
 
