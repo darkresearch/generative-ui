@@ -15,6 +15,7 @@ import { darkTheme, darkMarkdownStyles } from './themes/dark';
 import { lightTheme, lightMarkdownStyles } from './themes/light';
 import { MarkdownRenderer } from './renderers/MarkdownRenderer';
 import { CodeBlock } from './renderers/CodeBlock';
+import { TableWrapper } from './renderers/TableWrapper';
 
 /**
  * Get theme configuration
@@ -266,6 +267,17 @@ export const StreamdownRN: React.FC<StreamdownRNProps> = React.memo(({
           theme={currentTheme}
         />
       );
+    };
+
+    // Custom table renderer with horizontal scroll
+    rules.table = (node: any, children: any, _parent: any, styles: any) => {
+      const TableComponent = (
+        <View key={node.key} style={styles.table}>
+          {children}
+        </View>
+      );
+      
+      return <TableWrapper key={`wrapper-${node.key}`}>{TableComponent}</TableWrapper>;
     };
 
     return rules;

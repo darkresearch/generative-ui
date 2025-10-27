@@ -39,6 +39,8 @@ export const lightMarkdownStyles = {
     fontFamily: lightTheme.fonts.body,
     fontSize: 16,
     lineHeight: 22,
+    flexWrap: 'wrap' as const,
+    flexShrink: 1,
   },
   heading1: {
     color: lightTheme.colors.text,
@@ -94,18 +96,26 @@ export const lightMarkdownStyles = {
     fontSize: 16,
     lineHeight: 22,
     marginBottom: lightTheme.spacing.paragraph,
+    flexWrap: 'wrap' as const,
+    flexShrink: 1,
   },
   strong: {
     color: lightTheme.colors.strong,
     fontWeight: 'bold' as const,
+    flexWrap: 'wrap' as const,
+    flexShrink: 1,
   },
   em: {
     color: lightTheme.colors.emphasis,
     fontStyle: 'italic' as const,
+    flexWrap: 'wrap' as const,
+    flexShrink: 1,
   },
   link: {
     color: lightTheme.colors.link,
     textDecorationLine: 'underline' as const,
+    flexWrap: 'wrap' as const,
+    flexShrink: 1,
   },
   code_inline: {
     color: lightTheme.colors.text,  // Same as regular text
@@ -117,6 +127,11 @@ export const lightMarkdownStyles = {
     paddingHorizontal: 0,
     paddingVertical: 0,
     borderRadius: 0,
+    flexWrap: 'wrap' as const,
+    flexShrink: 1,
+    // Web-specific: force long strings (like Solana addresses) to wrap
+    wordBreak: 'break-all' as any,
+    overflowWrap: 'anywhere' as any,
   },
   code_block: {
     color: lightTheme.colors.code,
@@ -126,6 +141,8 @@ export const lightMarkdownStyles = {
     padding: 12,  // More consistent padding
     borderRadius: 6,  // Slightly tighter radius
     marginVertical: 8,  // Tighter spacing
+    overflowX: 'auto' as const,
+    maxWidth: '100%',
   },
   fence: {
     color: lightTheme.colors.code,
@@ -137,6 +154,8 @@ export const lightMarkdownStyles = {
     borderWidth: 1,
     borderColor: '#e8e8e8',  // Barely lighter than background for subtle border
     marginVertical: 0,  // No extra spacing - CodeBlock handles its own margins
+    overflowX: 'auto' as const,
+    maxWidth: '100%',
   },
   blockquote: {
     borderLeftColor: lightTheme.colors.blockquote,
@@ -148,6 +167,8 @@ export const lightMarkdownStyles = {
   list_item: {
     color: lightTheme.colors.text,
     marginBottom: lightTheme.spacing.list,
+    flexWrap: 'wrap' as const,
+    flexShrink: 1,
   },
   bullet_list: {
     marginVertical: lightTheme.spacing.paragraph,
@@ -161,23 +182,54 @@ export const lightMarkdownStyles = {
     marginVertical: lightTheme.spacing.heading,
   },
   table: {
-    borderColor: lightTheme.colors.border,
-    borderWidth: 1,
-    borderRadius: 4,
+    borderColor: 'transparent',
+    borderWidth: 0,
+    borderRadius: 0,
     marginVertical: lightTheme.spacing.paragraph,
+    overflowX: 'auto' as const,
+    maxWidth: '100%',
+    display: 'block' as const,
+    width: '100%',
+    borderCollapse: 'collapse' as any,
   },
   th: {
-    backgroundColor: lightTheme.colors.codeBackground,
+    backgroundColor: 'transparent',
     color: lightTheme.colors.text,
-    fontWeight: 'bold' as const,
+    fontWeight: '600' as any,
+    fontSize: 14,  // Slightly larger for better readability
     padding: 8,
+    paddingBottom: 10,
     borderColor: lightTheme.colors.border,
-    borderWidth: 1,
-  },
+    borderBottomWidth: 1,
+    borderLeftWidth: 0,
+    borderRightWidth: 0,
+    borderTopWidth: 0,
+    textAlign: 'left' as any,
+    whiteSpace: 'nowrap' as any,  // Never wrap within cells - table scrolls instead
+    // Web: responsive sizing - scales down on mobile via CSS
+    '@media (max-width: 640px)': {
+      fontSize: 12,
+      padding: 6,
+      paddingBottom: 8,
+    },
+  } as any,
   td: {
     color: lightTheme.colors.text,
+    fontSize: 14,  // Slightly larger for better readability
     padding: 8,
+    paddingVertical: 10,
     borderColor: lightTheme.colors.border,
-    borderWidth: 1,
-  },
+    borderBottomWidth: 1,
+    borderLeftWidth: 0,
+    borderRightWidth: 0,
+    borderTopWidth: 0,
+    textAlign: 'left' as any,
+    whiteSpace: 'nowrap' as any,  // Never wrap within cells - table scrolls instead
+    // Web: responsive sizing - scales down on mobile via CSS
+    '@media (max-width: 640px)': {
+      fontSize: 12,
+      padding: 6,
+      paddingVertical: 8,
+    },
+  } as any,
 };
