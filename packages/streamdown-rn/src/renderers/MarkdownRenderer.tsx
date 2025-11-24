@@ -1,34 +1,37 @@
 /**
- * Simple Markdown Renderer for StreamdownRN
+ * Markdown Renderer for StreamdownRN
  * 
- * Clean, basic markdown rendering with proper theming
+ * Wrapper around CustomMarkdownRenderer (uses remark parser)
+ * Maintains same API as react-native-markdown-display for backward compatibility
  */
 
 import React from 'react';
-import Markdown from 'react-native-markdown-display';
-
-// Fix for TS2786: 'Markdown' cannot be used as a JSX component.
-const MarkdownComponent = Markdown as any;
+import { CustomMarkdownRenderer } from './CustomMarkdownRenderer';
 
 interface MarkdownRendererProps {
   children: string;
   theme?: 'dark' | 'light';
   style?: any;
   rules?: any;
+  componentMap?: Map<string, any>;
 }
 
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   children,
   style,
   rules = {},
+  theme,
+  componentMap,
 }) => {
   return (
-    <MarkdownComponent
+    <CustomMarkdownRenderer
       style={style}
       rules={rules}
+      theme={theme}
+      componentMap={componentMap}
     >
       {children}
-    </MarkdownComponent>
+    </CustomMarkdownRenderer>
   );
 };
 

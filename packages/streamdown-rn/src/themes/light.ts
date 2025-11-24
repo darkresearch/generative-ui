@@ -3,6 +3,7 @@
  * Based on GitHub's light theme color palette
  */
 
+import { Platform } from 'react-native';
 import { ThemeConfig } from '../core/types';
 
 export const lightTheme: ThemeConfig = {
@@ -37,9 +38,24 @@ export const lightTheme: ThemeConfig = {
     skeletonHighlight: '#ffffff',
   },
   fonts: {
-    body: undefined,          // Use system default
-    code: 'monospace',        // System monospace
-    heading: undefined,       // Use system default
+    body: Platform.select({   // Satoshi font for body text
+      ios: 'Satoshi-Regular',
+      android: 'Satoshi-Regular',
+      web: 'Satoshi-Regular',
+      default: 'Satoshi-Regular',
+    }),
+    code: Platform.select({   // Platform-specific monospace font
+      ios: 'Menlo',
+      android: 'monospace',
+      web: 'monospace',
+      default: 'monospace',
+    }),
+    heading: Platform.select({   // Satoshi font for headings
+      ios: 'Satoshi-Bold',
+      android: 'Satoshi-Bold',
+      web: 'Satoshi-Bold',
+      default: 'Satoshi-Bold',
+    }),
   },
   spacing: {
     paragraph: 12,            // Space between paragraphs
@@ -60,53 +76,65 @@ export const lightMarkdownStyles = {
     lineHeight: 22,
     flexWrap: 'wrap' as const,
     flexShrink: 1,
+    marginTop: 0,
+    marginBottom: 0,
+    paddingTop: 0,
+    paddingBottom: 0,
+    paddingLeft: 0,
+    paddingRight: 0,
   },
   heading1: {
     color: lightTheme.colors.text,
     ...(lightTheme.fonts.heading && { fontFamily: lightTheme.fonts.heading }),
     fontSize: 24,
+    lineHeight: 30, // 1.25x - GitHub standard, prevents clipping on mobile
     fontWeight: 'bold' as const,
-    marginTop: lightTheme.spacing.heading,
+    marginTop: 0, // No top margin - first element should start at top
     marginBottom: lightTheme.spacing.paragraph,
   },
   heading2: {
     color: lightTheme.colors.text,
     ...(lightTheme.fonts.heading && { fontFamily: lightTheme.fonts.heading }),
     fontSize: 20,
+    lineHeight: 26, // 1.3x - GitHub standard
     fontWeight: 'bold' as const,
-    marginTop: lightTheme.spacing.heading,
+    marginTop: 0, // One-way spacing: spacing comes from element above's marginBottom
     marginBottom: lightTheme.spacing.paragraph,
   },
   heading3: {
     color: lightTheme.colors.text,
     ...(lightTheme.fonts.heading && { fontFamily: lightTheme.fonts.heading }),
     fontSize: 18,
+    lineHeight: 24, // 1.33x - GitHub standard
     fontWeight: 'bold' as const,
-    marginTop: lightTheme.spacing.heading,
+    marginTop: 0, // One-way spacing: spacing comes from element above's marginBottom
     marginBottom: lightTheme.spacing.paragraph,
   },
   heading4: {
     color: lightTheme.colors.text,
     ...(lightTheme.fonts.heading && { fontFamily: lightTheme.fonts.heading }),
     fontSize: 16,
+    lineHeight: 21, // 1.31x - GitHub standard
     fontWeight: 'bold' as const,
-    marginTop: lightTheme.spacing.heading,
+    marginTop: 0, // One-way spacing: spacing comes from element above's marginBottom
     marginBottom: lightTheme.spacing.paragraph,
   },
   heading5: {
     color: lightTheme.colors.text,
     ...(lightTheme.fonts.heading && { fontFamily: lightTheme.fonts.heading }),
     fontSize: 14,
+    lineHeight: 19, // 1.36x - GitHub standard
     fontWeight: 'bold' as const,
-    marginTop: lightTheme.spacing.heading,
+    marginTop: 0, // One-way spacing: spacing comes from element above's marginBottom
     marginBottom: lightTheme.spacing.paragraph,
   },
   heading6: {
     color: lightTheme.colors.text,
     ...(lightTheme.fonts.heading && { fontFamily: lightTheme.fonts.heading }),
     fontSize: 12,
+    lineHeight: 16, // 1.33x - GitHub standard
     fontWeight: 'bold' as const,
-    marginTop: lightTheme.spacing.heading,
+    marginTop: 0, // One-way spacing: spacing comes from element above's marginBottom
     marginBottom: lightTheme.spacing.paragraph,
   },
   paragraph: {
@@ -114,6 +142,7 @@ export const lightMarkdownStyles = {
     ...(lightTheme.fonts.body && { fontFamily: lightTheme.fonts.body }),
     fontSize: 16,
     lineHeight: 22,
+    marginTop: 0, // No top margin - spacing comes from element above's marginBottom
     marginBottom: lightTheme.spacing.paragraph,
     flexWrap: 'wrap' as const,
     flexShrink: 1,
@@ -139,7 +168,12 @@ export const lightMarkdownStyles = {
   code_inline: {
     color: lightTheme.colors.text,  // Same as regular text
     backgroundColor: 'transparent',  // No background, blend into chat
-    ...(lightTheme.fonts.code && { fontFamily: lightTheme.fonts.code }),
+    fontFamily: Platform.select({
+      ios: 'Menlo',
+      android: 'monospace',
+      web: 'monospace',
+      default: 'monospace',
+    }),
     fontSize: 16,  // Match body text size
     lineHeight: 22,  // Match body line height
     borderWidth: 0,  // No border
@@ -172,7 +206,8 @@ export const lightMarkdownStyles = {
     borderRadius: 28,  // Rounder corners like ChatGPT
     borderWidth: 1,
     borderColor: lightTheme.colors.codeBlockBorder || lightTheme.colors.border,
-    marginVertical: 0,  // No extra spacing - CodeBlock handles its own margins
+    marginTop: 0, // One-way spacing: spacing comes from element above's marginBottom
+    marginBottom: lightTheme.spacing.paragraph, // Spacing after code blocks
     overflowX: 'auto' as const,
     maxWidth: '100%',
   },
@@ -180,25 +215,44 @@ export const lightMarkdownStyles = {
     borderLeftColor: lightTheme.colors.blockquote,
     borderLeftWidth: 4,
     paddingLeft: 12,
-    marginVertical: lightTheme.spacing.paragraph,
+    paddingVertical: 0,  // No vertical padding - let content handle spacing
+    marginTop: 0, // One-way spacing: spacing comes from element above's marginBottom
+    marginBottom: lightTheme.spacing.paragraph,
     fontStyle: 'italic' as const,
+    flexDirection: 'column' as const,
+    justifyContent: 'center' as const,
+    alignItems: 'flex-start' as const,
+    minHeight: 22,  // Ensure minimum height for lineHeight
   },
   list_item: {
     color: lightTheme.colors.text,
+    ...(lightTheme.fonts.body && { fontFamily: lightTheme.fonts.body }),
+    fontSize: 16,
+    lineHeight: 22,
     marginBottom: lightTheme.spacing.list,
     flexWrap: 'wrap' as const,
     flexShrink: 1,
+    paddingLeft: 16, // GitHub standard: 16px indentation for list items
   },
   bullet_list: {
-    marginVertical: lightTheme.spacing.paragraph,
+    marginTop: 0, // One-way spacing: spacing comes from element above's marginBottom
+    marginBottom: lightTheme.spacing.paragraph,
+    paddingLeft: 0,
+    width: '100%', // Ensure list fills container width to prevent layout shifts
   },
   ordered_list: {
-    marginVertical: lightTheme.spacing.paragraph,
+    marginTop: 0, // One-way spacing: spacing comes from element above's marginBottom
+    marginBottom: lightTheme.spacing.paragraph,
+    paddingLeft: 0,
+    width: '100%', // Ensure list fills container width to prevent layout shifts
   },
   hr: {
     backgroundColor: lightTheme.colors.border,
     height: 1,
-    marginVertical: lightTheme.spacing.heading,
+    width: '100%', // Ensure horizontal rule spans full width
+    alignSelf: 'stretch', // Ensure it stretches to fill container
+    marginTop: 0, // One-way spacing: spacing comes from element above's marginBottom
+    marginBottom: lightTheme.spacing.heading,
   },
   table: {
     borderColor: 'transparent',

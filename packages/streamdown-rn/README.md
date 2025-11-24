@@ -788,6 +788,15 @@ Tables automatically wrap in a horizontal ScrollView on mobile for better UX.
 - **React** >= 18.0.0
 - **React Native** >= 0.70.0
 
+## Technical Details
+
+streamdown-rn uses a custom markdown renderer built on [remark](https://github.com/remarkjs/remark) and [remark-gfm](https://github.com/remarkjs/remark-gfm) for parsing, providing:
+
+- **GitHub Flavored Markdown (GFM)** support - Tables, task lists, strikethrough, and more
+- **Industry-standard typography** - Line heights and spacing match GitHub markdown rendering
+- **Custom React Native renderer** - Full control over rendering for optimal mobile performance
+- **XSS protection** - Safe parsing with fallback to plain text on parse errors
+
 ## Roadmap
 
 streamdown-rn is early in development and still lacks some feature parity with Vercel's streamdown. The primary goal of our roadmap is to match that feature parity. Planned for future releases:

@@ -8,11 +8,13 @@
     "find-icon": "node scripts/find-icon.js"
   },
   "dependencies": {
-    "lucide-react-native": "^0.468.0",
-    "react-native-svg": "^15.12.1",
-    "nativewind": "^4.0.0",
+    "@rn-primitives/label": "^1.2.0",
+    "@rn-primitives/slot": "^1.2.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
+    "lucide-react-native": "^0.468.0",
+    "nativewind": "^4.0.0",
+    "react-native-svg": "^15.12.1",
     "tailwind-merge": "^2.0.0"
   },
   "devDependencies": {
@@ -24,4 +26,3 @@
     "react-native": "*"
   }
 }
-

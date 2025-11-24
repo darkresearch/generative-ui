@@ -18,10 +18,10 @@
   "dependencies": {
     "expo-clipboard": "^8.0.0",
     "highlight.js": "^11.11.1",
-    "react-native-markdown-display": "^7.0.0",
     "react-native-svg": "^13.4.0",
     "react-native-syntax-highlighter": "^2.1.0",
     "react-native-webview": "^13.6.0",
+    "remark": "^15.0.1",
     "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0"
   },

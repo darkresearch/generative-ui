@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Platform } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import SyntaxHighlighter from 'react-native-syntax-highlighter';
 import { ThemeConfig } from '../core/types';
@@ -64,6 +64,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ code, language, theme }) =
       borderColor,
       borderWidth: 1,
       borderRadius: 28,
+      marginBottom: theme.spacing.paragraph, // One-way spacing: spacing after code blocks
     }]}>
       {/* Header with language and copy button */}
       <View style={[styles.header, { backgroundColor: headerBg }]}>
@@ -91,12 +92,23 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ code, language, theme }) =
             language={language || 'text'}
             style={syntaxStyle}
             highlighter="hljs"
-            fontSize={13}
-            fontFamily={theme.fonts.code || 'monospace'}
+            fontSize={14}
+            fontFamily={Platform.select({
+              ios: 'Menlo',
+              android: 'monospace',
+              web: 'monospace',
+              default: 'monospace',
+            })}
             customStyle={{
               backgroundColor: 'transparent',
-              padding: 16,
               paddingTop: 8,
+              paddingHorizontal: 16,
+              paddingBottom: Platform.select({
+                ios: 0,
+                android: 0,
+                web: 12,  // Small bottom padding on web for better visual spacing
+                default: 0,
+              }),
               margin: 0,
               width: '100%',
             }}
@@ -121,9 +133,11 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ code, language, theme }) =
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 8,
-    marginBottom: 12,  // Slightly more space after code blocks
+    marginTop: 0, // One-way spacing: spacing comes from element above's marginBottom
+    marginBottom: 0, // Will be set dynamically from theme
     overflow: 'hidden',
+    width: '100%',
+    alignSelf: 'stretch',
   },
   header: {
     flexDirection: 'row',
@@ -148,12 +162,14 @@ const styles = StyleSheet.create({
   },
   codeContainer: {
     maxHeight: 400, // Limit height, allow scrolling if needed
+    width: '100%',
   },
   scrollContent: {
     flexGrow: 1,
   },
   preTag: {
     width: '100%',
+    alignSelf: 'stretch',
   },
   codeTag: {
     // Text components wrap by default in React Native

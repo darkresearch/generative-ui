@@ -42,8 +42,7 @@ function AppContent() {
 }
 
 export default function App() {
-  // Load fonts using platform-specific hook
-  // Web version loads woff2 fonts, native version loads OTF fonts
+  // Load Satoshi OTF fonts (works on both web and native)
   const [fontsLoaded] = useAppFonts();
 
   // Wait for fonts to load on both platforms

@@ -24,6 +24,7 @@ export function fixIncompleteMarkdown(
 
   // Always hide incomplete markers (even when stack is empty)
   text = hideIncompleteCodeBlockMarkers(text);
+  text = hideIncompleteListMarkers(text);
   
   const { cleanText } = hideIncompleteComponents(text, registry);
   text = cleanText;
@@ -66,6 +67,9 @@ function processMarkdown(text: string, skipHiding = false, inCodeBlock = false, 
   if (!skipHiding) {
     // Hide incomplete code block markers FIRST
     processedText = hideIncompleteCodeBlockMarkers(processedText);
+    
+    // Hide incomplete list markers (before components, so components can still use them)
+    processedText = hideIncompleteListMarkers(processedText);
 
     // Hide incomplete component syntax
     const { cleanText, bufferedComponent } = hideIncompleteComponents(processedText, registry);
@@ -129,6 +133,74 @@ function hideIncompleteCodeBlockMarkers(text: string): string {
   }
   
   return text;
+}
+
+/**
+ * Hide incomplete list markers (- or + at end of line without space)
+ * Only hide if the marker is at the end of a line and not followed by a space
+ * This prevents "-" and "+" from being parsed as list items until "- " or "+ " is typed
+ * IMPORTANT: Preserves horizontal rules (---, ***, ___) which are three or more dashes/asterisks/underscores
+ */
+function hideIncompleteListMarkers(text: string): string {
+  // Normalize em-dashes (—) and en-dashes (–) to regular hyphens (-) for horizontal rules
+  // iOS keyboard auto-converts hyphens to em-dashes, but markdown horizontal rules require regular hyphens
+  // Only normalize on lines that could be horizontal rules (to avoid breaking actual em-dashes in content)
+  const lines = text.split('\n');
+  const normalizedLines: string[] = [];
+  
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i];
+    // Check if line looks like a horizontal rule (only dashes/asterisks/underscores, optionally with whitespace)
+    // If so, normalize em-dashes and en-dashes to regular hyphens
+    // Note: em-dash (—) U+2014, en-dash (–) U+2013, hyphen (-) U+002D
+    if (/^\s*[-—–*_]+\s*$/.test(line)) {
+      // This line could be a horizontal rule - normalize Unicode dashes to ASCII hyphens
+      line = line.replace(/[—–]/g, '-'); // Replace em-dash (—) and en-dash (–) with regular hyphen (-)
+    }
+    normalizedLines.push(line);
+  }
+  
+  // Split into lines to check each line
+  const processedLines: string[] = [];
+  
+  for (let i = 0; i < normalizedLines.length; i++) {
+    let line = normalizedLines[i];
+    const isLastLine = i === normalizedLines.length - 1;
+    
+    // Check if this line is a horizontal rule (three or more dashes, asterisks, or underscores)
+    // Horizontal rules: ---, ***, ___ (three or more, optionally with leading whitespace)
+    // Match: optional whitespace, then three or more of the same character (-, *, or _)
+    const horizontalRuleMatch = line.match(/^\s*([-*_])\1{2,}\s*$/);
+    
+    if (horizontalRuleMatch) {
+      // This is a horizontal rule - preserve it
+      processedLines.push(line);
+      continue;
+    }
+    
+    // Check if line ends with "-" or "+" (not followed by space)
+    // Only hide if it's at the end of the line (or end of text)
+    // IMPORTANT: Don't hide single "-" if it could be part of a horizontal rule (---)
+    // We need to allow users to type three dashes without hiding them prematurely
+    if (isLastLine) {
+      // For the last line, check if it ends with "-" or "+" without space after
+      // But only if it's a single dash/plus (not part of a horizontal rule)
+      // CRITICAL: Don't hide single "-" because it could be the start of "---"
+      // Only hide "+" for incomplete list markers
+      const singlePlusMatch = line.match(/^(\s*)\+$/);
+      
+      if (singlePlusMatch) {
+        // Hide the "+" marker - remove it (but NOT "-" because it could be part of "---")
+        const beforeMarker = line.substring(0, line.length - 1);
+        processedLines.push(beforeMarker);
+        continue;
+      }
+    }
+    
+    processedLines.push(line);
+  }
+  
+  return processedLines.join('\n');
 }
 
 /**
@@ -333,17 +405,36 @@ function fixIncompleteBold(text: string): string {
  * Fix incomplete italic text by checking for unmatched * pairs
  * Must be called after fixIncompleteBold to avoid conflicts
  * Handles streaming cases where * appears at the end or has content without closing
+ * IMPORTANT: Skips list markers (* at start of line) to avoid interfering with list parsing
  */
 function fixIncompleteItalic(text: string): string {
+  // Split into lines to check for list markers
+  const lines = text.split('\n');
+  const processedLines: string[] = [];
+  
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+    let line = lines[lineIndex];
+    
+    // Skip italic processing if this line starts with a list marker (*, -, +)
+    // List markers are: * at start of line (with optional leading whitespace) followed by space
+    const isListMarker = /^\s*[-*+]\s+/.test(line);
+    
+    if (isListMarker) {
+      // This is a list item - don't process italic markers
+      processedLines.push(line);
+      continue;
+    }
+    
+    // Process italic markers for non-list lines
   // First, check if text ends with a single * (not part of **)
-  if (text.endsWith('*') && !text.endsWith('**')) {
+    if (line.endsWith('*') && !line.endsWith('**')) {
     // Count all single * that aren't part of **
     const singleStars: number[] = [];
     let index = 0;
-    while (index < text.length) {
-      if (text[index] === '*') {
+      while (index < line.length) {
+        if (line[index] === '*') {
         // Check if this is part of **
-        if (index < text.length - 1 && text[index + 1] === '*') {
+          if (index < line.length - 1 && line[index + 1] === '*') {
           index += 2; // Skip both stars
           continue;
         }
@@ -355,28 +446,26 @@ function fixIncompleteItalic(text: string): string {
     // If we have an odd number of single *, the last one is unclosed
     if (singleStars.length % 2 === 1) {
       const lastStarPos = singleStars[singleStars.length - 1];
-      const textAfterLastStar = text.substring(lastStarPos + 1);
+        const textAfterLastStar = line.substring(lastStarPos + 1);
       
       // If text ends with * and no content after, complete with zero-width space
       if (textAfterLastStar.length === 0) {
-        return text + '\u200B*';
-      }
-      
+          line = line + '\u200B*';
+        } else if (textAfterLastStar.trim().length > 0) {
       // If there's content after the last *, complete it normally
-      if (textAfterLastStar.trim().length > 0) {
-        return text + '*';
+          line = line + '*';
       }
     }
   }
   
   // Handle incomplete italic with content: *text without closing *
   // Use regex that doesn't match **
-  return text.replace(
+    line = line.replace(
     /(?<!\*)\*([^*]+)$/,
     (match, content) => {
       // Double-check this isn't part of ** by checking the match position
-      const matchIndex = text.lastIndexOf(match);
-      if (matchIndex > 0 && text[matchIndex - 1] === '*') {
+        const matchIndex = line.lastIndexOf(match);
+        if (matchIndex > 0 && line[matchIndex - 1] === '*') {
         return match; // It's part of **, don't change
       }
       
@@ -391,6 +480,11 @@ function fixIncompleteItalic(text: string): string {
       return '*' + trimmed + '*' + trailingWhitespace;
     }
   );
+    
+    processedLines.push(line);
+  }
+  
+  return processedLines.join('\n');
 }
 
 /**

@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "Developer",
+    "slug": "dev",
+    "scheme": "dev",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/app-icon.png",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.example.dev",
+      "icon": "./assets/app-icon.png"
+    },
+    "android": {
+      "package": "com.example.dev",
+      "icon": "./assets/app-icon.png"
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-asset",
+      "expo-font"
+    ],
+    "experiments": {
+      "autolinkingModuleResolution": true
+    }
+  }
+}

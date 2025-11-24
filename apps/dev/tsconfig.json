@@ -1,0 +1,22 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "@darkresearch/design-system": [
+        "../../packages/design-system/src"
+      ],
+      "@darkresearch/galerie-rn": [
+        "../../packages/galerie-rn/src"
+      ],
+      "@darkresearch/streamdown-rn": [
+        "../../packages/streamdown-rn/src"
+      ]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "nativewind-env.d.ts"
+  ]
+}

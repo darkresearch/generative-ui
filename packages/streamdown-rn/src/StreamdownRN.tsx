@@ -66,6 +66,10 @@ export const StreamdownRN: React.FC<StreamdownRNProps> = React.memo(({
   onStateUpdate,
   onComponentExtractionUpdate,
 }) => {
+  // Handle empty content early - but AFTER all hooks are called
+  // We'll check this again after hooks to return null, but hooks must always run
+  const isEmpty = !children || children.trim().length === 0;
+  
   // Maintain incomplete tag state for performance optimization
   const incompleteTagStateRef = useRef(INITIAL_INCOMPLETE_STATE);
   
@@ -278,92 +282,39 @@ export const StreamdownRN: React.FC<StreamdownRNProps> = React.memo(({
 
     if (processedContent.components.length > 0) {
       // Custom paragraph renderer that keeps components inline
+      // Updated to work with MDAST structure (children array) instead of content string
       rules.paragraph = (node: any, children: any, _parent: any, styles: any) => {
         // DEBUG: Log what we receive
         console.log('📝 Paragraph rule triggered:', {
-          nodeContent: node.content?.substring(0, 200),
           nodeType: node.type,
-          childrenCount: React.Children.count(children),
+          hasContent: !!node.content,
+          hasChildren: !!node.children,
+          childrenCount: Array.isArray(children) ? children.length : React.Children.count(children),
           nodeKeys: Object.keys(node),
-          fullNode: node, // Log the entire node object
         });
         
-        // Check if this paragraph contains component markers
-        // NOTE: Backticks are stripped by markdown parser, match raw markers
-        const textContent = node.content || '';
-        const hasComponentMarker = /__COMPONENT__/.test(textContent);
+        // MDAST paragraphs have 'children' array, not 'content' string
+        // Component markers appear as 'inlineCode' nodes in children
+        // Check if any children are inlineCode nodes with component markers
+        const nodeChildren = node.children || [];
+        const hasComponentMarker = nodeChildren.some((child: any) => 
+          child.type === 'inlineCode' && /__COMPONENT__/.test(child.value || '')
+        );
         
         console.log('🔍 Has component marker?', hasComponentMarker);
-        console.log('🔍 Text content preview:', textContent.substring(0, 300));
-        console.log('🔍 Full node content:', node.content);
-        console.log('🔍 Children content:', children);
-        console.log('🔍 Children type:', typeof children);
-        console.log('🔍 Children length:', Array.isArray(children) ? children.length : 'not array');
         
         if (!hasComponentMarker) {
-          // Regular paragraph without components
+          // Regular paragraph without components - render children as-is
           return <Text key={node.key} style={styles.paragraph}>{children}</Text>;
         }
         
         console.log('✨ Parsing paragraph with components...');
         
-        // Parse paragraph and render text + components inline
-        const segments: any[] = [];
-        // Match WITHOUT backticks: __COMPONENT__ID__NAME__
-        const markerPattern = /__COMPONENT__([^_]+)__([^_]+)__/g;
-        let lastIndex = 0;
-        let match;
-        
-        while ((match = markerPattern.exec(textContent)) !== null) {
-          const componentId = match[1];
-          const componentName = match[2];
-          
-          console.log('🎯 Matched component:', { componentId, componentName, matchIndex: match.index });
-          
-          // Add text before component
-          if (match.index > lastIndex) {
-            segments.push({
-              type: 'text',
-              content: textContent.substring(lastIndex, match.index)
-            });
-          }
-          
-          // Add component
-          const componentInstance = componentMap.get(componentId);
-          if (componentInstance) {
-            segments.push({
-              type: 'component',
-              content: componentInstance
-            });
-          }
-          
-          lastIndex = match.index + match[0].length;
-        }
-        
-        // Add remaining text
-        if (lastIndex < textContent.length) {
-          segments.push({
-            type: 'text',
-            content: textContent.substring(lastIndex)
-          });
-        }
-        
-        console.log('📦 Segments created:', segments.length, segments.map(s => ({
-          type: s.type,
-          contentPreview: s.type === 'text' ? s.content.substring(0, 50) : s.content.name
-        })));
-        
-        // Render all segments in a single Text component for true inline flow
+        // Render children - component markers in inlineCode nodes will be handled by code_inline rule
+        // The code_inline rule will render components, so we just need to render children normally
         return (
           <Text key={node.key} style={styles.paragraph}>
-            {segments.map((segment, idx) => {
-              if (segment.type === 'text') {
-                return <Text key={`text-${idx}`}>{segment.content}</Text>;
-              } else {
-                console.log('🎨 Rendering component inline:', segment.content.name);
-                return renderComponent(segment.content);
-              }
-            })}
+            {children}
           </Text>
         );
       };
@@ -371,8 +322,10 @@ export const StreamdownRN: React.FC<StreamdownRNProps> = React.memo(({
 
     // Custom code block renderer
     rules.fence = (node: any, _children: any, _parent: any, _styles: any) => {
-      const language = node.sourceInfo || '';
-      const code = node.content || '';
+      // MDAST code nodes have 'lang' and 'value' properties
+      // Adapt to match react-native-markdown-display structure
+      const language = node.lang || node.sourceInfo || '';
+      const code = node.value || node.content || '';
       
       return (
         <CodeBlock
@@ -395,6 +348,8 @@ export const StreamdownRN: React.FC<StreamdownRNProps> = React.memo(({
       return <TableWrapper key={`wrapper-${node.key}`}>{TableComponent}</TableWrapper>;
     };
 
+    // Note: Debug borders removed - typography standards now enforced via explicit lineHeight values
+
     return rules;
   }, [processedContent.components, renderComponent, themeConfig]);
 
@@ -403,8 +358,15 @@ export const StreamdownRN: React.FC<StreamdownRNProps> = React.memo(({
     return injectComponentPlaceholders(processedContent.markdown, processedContent.components);
   }, [processedContent]);
 
-  // Handle empty content
-  if (!children || children.trim().length === 0) {
+  // Create component map for renderer
+  const componentMap = useMemo(() => {
+    return new Map(
+      processedContent.components.map(comp => [comp.id, comp])
+    );
+  }, [processedContent.components]);
+
+  // Handle empty content - AFTER all hooks are called
+  if (isEmpty) {
     return null;
   }
 
@@ -420,6 +382,7 @@ export const StreamdownRN: React.FC<StreamdownRNProps> = React.memo(({
         style={markdownStyles}
         rules={customRules}
         theme={typeof theme === 'string' ? theme : 'dark'}
+        componentMap={componentMap}
       >
         {markdownWithPlaceholders}
       </MarkdownRenderer>
