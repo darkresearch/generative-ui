@@ -56,6 +56,12 @@ export const darkTheme: ThemeConfig = {
       web: 'Satoshi-Bold',
       default: 'Satoshi-Bold',
     }),
+    italic: Platform.select({   // Satoshi font for italic text
+      ios: 'Satoshi-Italic',
+      android: 'Satoshi-Italic',
+      web: 'Satoshi-Italic',
+      default: 'Satoshi-Italic',
+    }),
   },
   spacing: {
     paragraph: 12,            // Space between paragraphs
@@ -150,12 +156,14 @@ export const darkMarkdownStyles = {
   strong: {
     color: darkTheme.colors.strong,
     fontWeight: 'bold' as const,
+    ...(darkTheme.fonts.heading && { fontFamily: darkTheme.fonts.heading }), // Use Satoshi-Bold for bold text
     flexWrap: 'wrap' as const,
     flexShrink: 1,
   },
   em: {
     color: darkTheme.colors.emphasis,
     fontStyle: 'italic' as const,
+    ...(darkTheme.fonts.italic && { fontFamily: darkTheme.fonts.italic }), // Use Satoshi-Italic for italic text
     flexWrap: 'wrap' as const,
     flexShrink: 1,
   },

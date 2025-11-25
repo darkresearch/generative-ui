@@ -3,21 +3,29 @@ import { View, Platform } from 'react-native';
 import { InputArea } from './InputArea';
 import { OutputArea } from './OutputArea';
 import type { ComponentRegistry } from '@darkresearch/streamdown-rn';
+import type { IncompleteTagState } from '../../../packages/streamdown-rn/src/core/types';
+import type { ComponentExtractionState } from '@darkresearch/streamdown-rn';
 
 interface ContentLayoutProps {
   markdown: string;
+  streamingMarkdown?: string;
   onMarkdownChange: (text: string) => void;
   componentRegistry?: ComponentRegistry;
   theme?: 'dark' | 'light';
   safeViewportHeight: number;
+  onStateUpdate?: (state: IncompleteTagState) => void;
+  onComponentExtractionUpdate?: (state: ComponentExtractionState) => void;
 }
 
 export function ContentLayout({
   markdown,
+  streamingMarkdown,
   onMarkdownChange,
   componentRegistry,
   theme = 'light',
   safeViewportHeight,
+  onStateUpdate,
+  onComponentExtractionUpdate,
 }: ContentLayoutProps) {
   // #region agent log
   fetch('http://127.0.0.1:7242/ingest/ba72c841-4600-456b-adad-25adf0868af7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ContentLayout.tsx:21',message:'ContentLayout render',data:{platform:Platform.OS,safeViewportHeight,markdownLength:markdown.length},timestamp:Date.now(),sessionId:'debug-session',runId:'web-debug',hypothesisId:'A'})}).catch(()=>{});
@@ -59,9 +67,11 @@ export function ContentLayout({
           }}
         >
           <OutputArea
-            markdown={markdown}
+            markdown={streamingMarkdown ?? markdown}
             componentRegistry={componentRegistry}
             theme={theme}
+            onStateUpdate={onStateUpdate}
+            onComponentExtractionUpdate={onComponentExtractionUpdate}
           />
         </View>
       </View>
@@ -80,9 +90,11 @@ export function ContentLayout({
       </View>
       <View className="flex-1" style={{ height: sectionHeight }}>
         <OutputArea
-          markdown={markdown}
+          markdown={streamingMarkdown ?? markdown}
           componentRegistry={componentRegistry}
           theme={theme}
+          onStateUpdate={onStateUpdate}
+          onComponentExtractionUpdate={onComponentExtractionUpdate}
         />
       </View>
     </View>

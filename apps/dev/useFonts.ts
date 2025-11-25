@@ -6,6 +6,7 @@ export function useAppFonts() {
     'Satoshi-Regular': require('./assets/fonts/Satoshi-Regular.otf'),
     'Satoshi-Medium': require('./assets/fonts/Satoshi-Medium.otf'),
     'Satoshi-Bold': require('./assets/fonts/Satoshi-Bold.otf'),
+    'Satoshi-Italic': require('./assets/fonts/Satoshi-Italic.otf'),
   });
 }
 

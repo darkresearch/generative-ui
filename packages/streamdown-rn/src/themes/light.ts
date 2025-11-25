@@ -56,6 +56,12 @@ export const lightTheme: ThemeConfig = {
       web: 'Satoshi-Bold',
       default: 'Satoshi-Bold',
     }),
+    italic: Platform.select({   // Satoshi font for italic text
+      ios: 'Satoshi-Italic',
+      android: 'Satoshi-Italic',
+      web: 'Satoshi-Italic',
+      default: 'Satoshi-Italic',
+    }),
   },
   spacing: {
     paragraph: 12,            // Space between paragraphs
@@ -150,12 +156,14 @@ export const lightMarkdownStyles = {
   strong: {
     color: lightTheme.colors.strong,
     fontWeight: 'bold' as const,
+    ...(lightTheme.fonts.heading && { fontFamily: lightTheme.fonts.heading }), // Use Satoshi-Bold for bold text
     flexWrap: 'wrap' as const,
     flexShrink: 1,
   },
   em: {
     color: lightTheme.colors.emphasis,
     fontStyle: 'italic' as const,
+    ...(lightTheme.fonts.italic && { fontFamily: lightTheme.fonts.italic }), // Use Satoshi-Italic for italic text
     flexWrap: 'wrap' as const,
     flexShrink: 1,
   },

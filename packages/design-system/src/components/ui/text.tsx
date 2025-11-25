@@ -68,7 +68,6 @@ function Text({
   className,
   asChild = false,
   variant = 'default',
-  style,
   ...props
 }: React.ComponentProps<typeof RNText> &
   TextVariantProps &
@@ -77,24 +76,11 @@ function Text({
   }) {
   const textClass = React.useContext(TextClassContext);
   const Component = asChild ? Slot.Text : RNText;
-  
-  // Default font family: Satoshi-Regular (unless overridden by style prop)
-  const defaultFontFamily = Platform.select({
-    ios: 'Satoshi-Regular',
-    android: 'Satoshi-Regular',
-    web: 'Satoshi-Regular',
-    default: 'Satoshi-Regular',
-  });
-  
   return (
     <Component
       className={cn(textVariants({ variant }), textClass, className)}
       role={variant ? ROLE[variant] : undefined}
       aria-level={variant ? ARIA_LEVEL[variant] : undefined}
-      style={[
-        { fontFamily: defaultFontFamily },
-        style,
-      ]}
       {...props}
     />
   );

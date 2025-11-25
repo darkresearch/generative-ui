@@ -57,6 +57,17 @@ target 'Developer' do
       :ccache_enabled => ccache_enabled?(podfile_properties),
     )
     
+    # Fix for react-native-reanimated: Set REACT_NATIVE_MINOR_VERSION for RN 0.81.5
+    installer.pods_project.targets.each do |target|
+      if target.name == 'RNReanimated'
+        target.build_configurations.each do |config|
+          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
+          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'REACT_NATIVE_MINOR_VERSION=81'
+        end
+        puts "✅ Set REACT_NATIVE_MINOR_VERSION=81 for RNReanimated"
+      end
+    end
+    
     # Fix for Folly coroutines header issue in React Native 0.81.5
     # Patch all Folly headers to comment out the coroutines include that doesn't exist
     folly_headers = ['Expected.h', 'Optional.h', 'Portability.h']

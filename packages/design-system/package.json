@@ -8,7 +8,10 @@
     "find-icon": "node scripts/find-icon.js"
   },
   "dependencies": {
+    "@rn-primitives/dialog": "^1.2.0",
     "@rn-primitives/label": "^1.2.0",
+    "@rn-primitives/menubar": "^1.2.0",
+    "@rn-primitives/popover": "^1.2.0",
     "@rn-primitives/slot": "^1.2.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",

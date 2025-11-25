@@ -227,8 +227,15 @@ function renderNode(
         renderNode(child, styles, customRules, componentMap, idx, undefined, undefined, 'strong')
       ) || [];
       
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ba72c841-4600-456b-adad-25adf0868af7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CustomMarkdownRenderer.tsx:strong',message:'Rendering strong node',data:{hasChildren:children.length>0,childrenCount:children.length,hasStrongStyle:!!styles.strong,strongStyleKeys:styles.strong?Object.keys(styles.strong):[],strongStyleValue:styles.strong},timestamp:Date.now(),sessionId:'debug-session',runId:'bold-italic-fix',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+      
+      // Fallback style if styles.strong is missing
+      const strongStyle = styles.strong || { fontWeight: 'bold' as const };
+      
       return (
-        <Text key={key} style={styles.strong}>
+        <Text key={key} style={strongStyle}>
           {children}
         </Text>
       );
@@ -240,8 +247,15 @@ function renderNode(
         renderNode(child, styles, customRules, componentMap, idx, undefined, undefined, 'emphasis')
       ) || [];
       
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ba72c841-4600-456b-adad-25adf0868af7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CustomMarkdownRenderer.tsx:emphasis',message:'Rendering emphasis node',data:{hasChildren:children.length>0,childrenCount:children.length,hasEmStyle:!!styles.em,emStyleKeys:styles.em?Object.keys(styles.em):[],emStyleValue:styles.em},timestamp:Date.now(),sessionId:'debug-session',runId:'bold-italic-fix',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+      
+      // Fallback style if styles.em is missing
+      const emStyle = styles.em || { fontStyle: 'italic' as const };
+      
       return (
-        <Text key={key} style={styles.em}>
+        <Text key={key} style={emStyle}>
           {children}
         </Text>
       );

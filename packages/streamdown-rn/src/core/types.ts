@@ -87,6 +87,7 @@ export interface ThemeConfig {
     body?: string;
     code?: string;
     heading?: string;
+    italic?: string;
   };
   spacing: {
     paragraph: number;
