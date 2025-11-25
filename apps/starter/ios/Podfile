@@ -56,5 +56,67 @@ target 'Starter' do
       :mac_catalyst_enabled => false,
       :ccache_enabled => ccache_enabled?(podfile_properties),
     )
+    
+    # Fix for react-native-reanimated: Set REACT_NATIVE_MINOR_VERSION for RN 0.81.5
+    installer.pods_project.targets.each do |target|
+      if target.name == 'RNReanimated'
+        target.build_configurations.each do |config|
+          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
+          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'REACT_NATIVE_MINOR_VERSION=81'
+        end
+        puts "✅ Set REACT_NATIVE_MINOR_VERSION=81 for RNReanimated"
+      end
+    end
+    
+    # Fix for Folly coroutines header issue in React Native 0.81.5
+    # Patch all Folly headers to comment out the coroutines include that doesn't exist
+    folly_headers = ['Expected.h', 'Optional.h', 'Portability.h']
+    folly_dir = File.join(installer.sandbox.root, 'Headers/Public/ReactNativeDependencies/folly')
+    
+    folly_headers.each do |header_name|
+      header_path = File.join(folly_dir, header_name)
+      if File.exist?(header_path)
+        # Make file writable
+        File.chmod(0644, header_path)
+        header_content = File.read(header_path)
+        # Comment out the problematic coroutines include section
+        patched_content = header_content.gsub(
+          /#if FOLLY_HAS_COROUTINES\n#include <folly\/coro\/Coroutine\.h>/,
+          '#if 0 // FOLLY_HAS_COROUTINES disabled - coroutines header not available\n// #include <folly/coro/Coroutine.h>'
+        )
+        if patched_content != header_content
+          File.write(header_path, patched_content)
+          puts "✅ Patched Folly #{header_name} to disable coroutines"
+        end
+      end
+    end
+    
+    # Fix for Yoga header include issue in React Native 0.81.5 with New Architecture
+    # Create symlink structure so <yoga/style/Style.h> and other yoga headers can be found
+    react_native_path = config[:reactNativePath] || File.join(installer.sandbox.root, '../../../node_modules/react-native')
+    yoga_source_dir = File.join(react_native_path, 'ReactCommon/yoga/yoga')
+    pods_yoga_dir = File.join(installer.sandbox.root, 'Headers/Public/yoga')
+    
+    if Dir.exist?(yoga_source_dir)
+      # Remove existing yoga dir if it exists
+      FileUtils.rm_rf(pods_yoga_dir) if Dir.exist?(pods_yoga_dir)
+      
+      # Create symlink to entire yoga directory
+      FileUtils.mkdir_p(File.dirname(pods_yoga_dir))
+      File.symlink(File.absolute_path(yoga_source_dir), pods_yoga_dir)
+      puts "✅ Created symlink for Yoga headers directory"
+    end
+    
+    # Ensure all targets that need Yoga headers have correct header search paths
+    installer.pods_project.targets.each do |target|
+      if ['RNReanimated', 'RNWorklets'].include?(target.name)
+        target.build_configurations.each do |config|
+          config.build_settings['HEADER_SEARCH_PATHS'] ||= ['$(inherited)']
+          config.build_settings['HEADER_SEARCH_PATHS'] << "\"#{File.join(installer.sandbox.root, 'Headers/Public')}\""
+          config.build_settings['HEADER_SEARCH_PATHS'] << "\"#{yoga_source_dir}\""
+        end
+        puts "✅ Added Yoga header search paths for #{target.name}"
+      end
+    end
   end
 end

@@ -3,8 +3,14 @@ module.exports = function(api) {
   return {
     presets: [
       'babel-preset-expo',
-      'nativewind/babel',
+    ],
+    plugins: [
+      ['react-native-unistyles/plugin', {
+        root: 'src',
+        autoProcessImports: ['@darkresearch/design-system'],
+        debug: true,
+      }],
+      'react-native-worklets/plugin',
     ],
   };
 };
-

@@ -3,21 +3,13 @@ module.exports = function(api) {
   return {
     presets: [
       'babel-preset-expo',
-      'nativewind/babel',
     ],
     plugins: [
-      [
-        'babel-plugin-module-resolver',
-        {
-          root: ['../../packages/design-system/src'],
-          alias: {
-            'src': '../../packages/design-system/src',
-          },
-          extensions: ['.js', '.jsx', '.ts', '.tsx'],
-        },
-      ],
-      'react-native-reanimated/plugin',
+      ['react-native-unistyles/plugin', {
+        root: 'src',
+        autoProcessImports: ['@darkresearch/design-system'],
+      }],
+      'react-native-worklets/plugin',
     ],
   };
 };
-

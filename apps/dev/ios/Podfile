@@ -90,5 +90,33 @@ target 'Developer' do
         end
       end
     end
+    
+    # Fix for Yoga header include issue in React Native 0.81.5 with New Architecture
+    # Create symlink structure so <yoga/style/Style.h> and other yoga headers can be found
+    react_native_path = config[:reactNativePath] || File.join(installer.sandbox.root, '../../../node_modules/react-native')
+    yoga_source_dir = File.join(react_native_path, 'ReactCommon/yoga/yoga')
+    pods_yoga_dir = File.join(installer.sandbox.root, 'Headers/Public/yoga')
+    
+    if Dir.exist?(yoga_source_dir)
+      # Remove existing yoga dir if it exists
+      FileUtils.rm_rf(pods_yoga_dir) if Dir.exist?(pods_yoga_dir)
+      
+      # Create symlink to entire yoga directory
+      FileUtils.mkdir_p(File.dirname(pods_yoga_dir))
+      File.symlink(File.absolute_path(yoga_source_dir), pods_yoga_dir)
+      puts "✅ Created symlink for Yoga headers directory"
+    end
+    
+    # Ensure all targets that need Yoga headers have correct header search paths
+    installer.pods_project.targets.each do |target|
+      if ['RNReanimated', 'RNWorklets'].include?(target.name)
+        target.build_configurations.each do |config|
+          config.build_settings['HEADER_SEARCH_PATHS'] ||= ['$(inherited)']
+          config.build_settings['HEADER_SEARCH_PATHS'] << "\"#{File.join(installer.sandbox.root, 'Headers/Public')}\""
+          config.build_settings['HEADER_SEARCH_PATHS'] << "\"#{yoga_source_dir}\""
+        end
+        puts "✅ Added Yoga header search paths for #{target.name}"
+      end
+    end
   end
 end

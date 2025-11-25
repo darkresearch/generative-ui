@@ -1,5 +1,4 @@
 const { getDefaultConfig } = require('expo/metro-config');
-const { withNativeWind } = require('nativewind/metro');
 const path = require('path');
 const fs = require('fs');
 
@@ -23,6 +22,13 @@ config.resolver = {
     path.resolve(packagesRoot, 'streamdown-rn/node_modules'),
   ],
     resolveRequest: (context, moduleName, platform) => {
+      // Handle react-native-unistyles resolution from workspace packages
+      if (moduleName === 'react-native-unistyles') {
+        return {
+          filePath: path.resolve(monorepoRoot, 'node_modules/react-native-unistyles/lib/commonjs/index.js'),
+          type: 'sourceFile',
+        };
+      }
       // Handle src/ imports when resolving from design-system package
       if (moduleName.startsWith('src/')) {
         const originPath = context.originModulePath || '';
@@ -50,12 +56,10 @@ config.resolver = {
     'remark': path.resolve(monorepoRoot, 'node_modules/remark'),
     'remark-gfm': path.resolve(monorepoRoot, 'node_modules/remark-gfm'),
     'mdast': path.resolve(monorepoRoot, 'node_modules/mdast'),
-      'react-native-screens': path.resolve(projectRoot, 'node_modules/react-native-screens'),
-      'react-native-reanimated': path.resolve(projectRoot, 'node_modules/react-native-reanimated'),
+    'react-native-screens': path.resolve(projectRoot, 'node_modules/react-native-screens'),
+    'react-native-reanimated': path.resolve(projectRoot, 'node_modules/react-native-reanimated'),
+    'react-native-unistyles': path.resolve(monorepoRoot, 'node_modules/react-native-unistyles'),
   },
 };
 
-module.exports = withNativeWind(config, { 
-  input: '../../global.css',
-  configPath: '../../tailwind.config.js',
-});
+module.exports = config;
