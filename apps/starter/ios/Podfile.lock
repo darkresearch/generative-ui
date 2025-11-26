@@ -32,6 +32,8 @@ PODS:
     - ExpoModulesCore
   - ExpoFont (14.0.9):
     - ExpoModulesCore
+  - ExpoHaptics (15.0.7):
+    - ExpoModulesCore
   - ExpoKeepAwake (15.0.7):
     - ExpoModulesCore
   - ExpoModulesCore (3.0.26):
@@ -47,28 +49,6 @@ PODS:
     - React-ImageManager
     - React-jsi
     - React-jsinspector
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - ReactNativeDependencies
-    - Yoga
-  - FastSquircle (1.0.13):
-    - hermes-engine
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-Core-prebuilt
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
     - React-NativeModulesApple
     - React-RCTFabric
     - React-renderercss
@@ -1810,7 +1790,7 @@ PODS:
     - ReactNativeDependencies
     - RNWorklets
     - Yoga
-  - RNSVG (15.12.1):
+  - RNSVG (15.15.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1831,9 +1811,9 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - RNSVG/common (= 15.12.1)
+    - RNSVG/common (= 15.15.0)
     - Yoga
-  - RNSVG/common (15.12.1):
+  - RNSVG/common (15.15.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1957,9 +1937,9 @@ DEPENDENCIES:
   - ExpoAsset (from `../../../node_modules/expo-asset/ios`)
   - ExpoFileSystem (from `../../../node_modules/expo-file-system/ios`)
   - ExpoFont (from `../../../node_modules/expo-font/ios`)
+  - ExpoHaptics (from `../../../node_modules/expo-haptics/ios`)
   - ExpoKeepAwake (from `../../../node_modules/expo-keep-awake/ios`)
   - ExpoModulesCore (from `../../../node_modules/expo-modules-core`)
-  - FastSquircle (from `../../../node_modules/react-native-fast-squircle`)
   - FBLazyVector (from `../../../node_modules/react-native/Libraries/FBLazyVector`)
   - hermes-engine (from `../../../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - NitroModules (from `../../../node_modules/react-native-nitro-modules`)
@@ -2030,7 +2010,7 @@ DEPENDENCIES:
   - ReactCommon/turbomodule/core (from `../../../node_modules/react-native/ReactCommon`)
   - ReactNativeDependencies (from `../../../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec`)
   - RNReanimated (from `../../../node_modules/react-native-reanimated`)
-  - RNSVG (from `../../../node_modules/react-native-svg`)
+  - RNSVG (from `../node_modules/react-native-svg`)
   - RNWorklets (from `../../../node_modules/react-native-worklets`)
   - Unistyles (from `../../../node_modules/react-native-unistyles`)
   - Yoga (from `../../../node_modules/react-native/ReactCommon/yoga`)
@@ -2046,12 +2026,12 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/expo-file-system/ios"
   ExpoFont:
     :path: "../../../node_modules/expo-font/ios"
+  ExpoHaptics:
+    :path: "../../../node_modules/expo-haptics/ios"
   ExpoKeepAwake:
     :path: "../../../node_modules/expo-keep-awake/ios"
   ExpoModulesCore:
     :path: "../../../node_modules/expo-modules-core"
-  FastSquircle:
-    :path: "../../../node_modules/react-native-fast-squircle"
   FBLazyVector:
     :path: "../../../node_modules/react-native/Libraries/FBLazyVector"
   hermes-engine:
@@ -2192,7 +2172,7 @@ EXTERNAL SOURCES:
   RNReanimated:
     :path: "../../../node_modules/react-native-reanimated"
   RNSVG:
-    :path: "../../../node_modules/react-native-svg"
+    :path: "../node_modules/react-native-svg"
   RNWorklets:
     :path: "../../../node_modules/react-native-worklets"
   Unistyles:
@@ -2206,9 +2186,9 @@ SPEC CHECKSUMS:
   ExpoAsset: d839c8eae8124470332408427327e8f88beb2dfd
   ExpoFileSystem: 77157a101e03150a4ea4f854b4dd44883c93ae0a
   ExpoFont: cf9d90ec1d3b97c4f513211905724c8171f82961
+  ExpoHaptics: 807476b0c39e9d82b7270349d6487928ce32df84
   ExpoKeepAwake: 1a2e820692e933c94a565ec3fbbe38ac31658ffe
   ExpoModulesCore: e8ec7f8727caf51a49d495598303dd420ca994bf
-  FastSquircle: d3fb3efb8a520d93c10cf02abc32704ef2eef342
   FBLazyVector: e95a291ad2dadb88e42b06e0c5fb8262de53ec12
   hermes-engine: 9f4dfe93326146a1c99eb535b1cb0b857a3cd172
   NitroModules: a71a5ab2911caf79e45170e6e12475b5260a12d0
@@ -2277,8 +2257,8 @@ SPEC CHECKSUMS:
   ReactCodegen: c1acc47016bcb83d3c70e6094d13a79ac7ebe270
   ReactCommon: 08810150b1206cc44aecf5f6ae19af32f29151a8
   ReactNativeDependencies: 71ce9c28beb282aa720ea7b46980fff9669f428a
-  RNReanimated: ee7bbac93eaf22505dcaebd67d226f76f7fe55ed
-  RNSVG: 31d6639663c249b7d5abc9728dde2041eb2a3c34
+  RNReanimated: b2dfd46c514babc91bed832ed651a6fae5fd78c0
+  RNSVG: 99ab6158011aece12019b236f168faa7a1e41af6
   RNWorklets: c27a3e7ac7e71c8b8df3d8380eee64929b9a6744
   Unistyles: 6ec637ad2b47c635f139f360c90d0059bf8f4d93
   Yoga: 5934998fbeaef7845dbf698f698518695ab4cd1a
