@@ -137,9 +137,12 @@ export default function App() {
       <View style={styles.content}>
         {/* Centered Text */}
         <View style={styles.textContainer}>
-          <Text style={styles.title}>app starter</Text>
+          <Text style={styles.title}>darkling</Text>
           <Text style={styles.subtitle}>
-            built with @darkresearch/generative-ui
+            An app starter template built 
+          </Text>
+          <Text style={styles.subtitle}>
+            with @darkresearch/generative-ui
           </Text>
           <Text style={styles.hint}>tap to spin ✦</Text>
         </View>
@@ -199,6 +202,14 @@ const styles = StyleSheet.create((theme) => ({
     color: '#262626',
     opacity: 0.6,
     fontFamily: 'Geist_400Regular',
+    lineHeight: 28,
+    // width: '90%',
+    // display: 'flex',
+    // // justifyContent: 'center',
+    // // alignItems: 'center',
+    // textAlign: 'center',
+    // // borderWidth: 1,
+    // // borderColor: 'red',
   },
   hint: {
     fontSize: 14,
