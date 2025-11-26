@@ -1,234 +1,354 @@
-import { ComponentType } from 'react';
-import { ViewStyle } from 'react-native';
+/**
+ * Core Types for Streamdown-RN
+ * 
+ * Block-based streaming markdown architecture.
+ * Optimized for append-only AI response streams.
+ */
+
+import type { ComponentType } from 'react';
+import type { Content } from 'mdast';
+
+// ============================================================================
+// Block Types
+// ============================================================================
 
 /**
- * Component registry interface - matches existing registry structure
+ * All supported block types in GitHub Flavored Markdown
+ */
+export type BlockType =
+  | 'heading'
+  | 'paragraph'
+  | 'codeBlock'
+  | 'list'
+  | 'table'
+  | 'blockquote'
+  | 'horizontalRule'
+  | 'image'
+  | 'footnote'
+  | 'component';  // Custom {{c:...}} syntax
+
+/**
+ * Heading levels (H1-H6)
+ */
+export type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
+
+// ============================================================================
+// Block Interfaces
+// ============================================================================
+
+/**
+ * Base block properties shared by all blocks
+ */
+interface BaseBlock {
+  /** Unique stable identifier (e.g., "h-0", "p-1") */
+  id: string;
+  /** Block type for rendering dispatch */
+  type: BlockType;
+  /** Raw markdown content of this block */
+  content: string;
+  /** Fast hash of content for React.memo comparison */
+  contentHash: number;
+  /** Start position in the full text */
+  startPos: number;
+  /** End position in the full text */
+  endPos: number;
+}
+
+/**
+ * A completed, immutable block that will never change.
+ * These are memoized and never re-render.
+ */
+export interface StableBlock extends BaseBlock {
+  /** Block-specific metadata */
+  meta: BlockMeta;
+  /** Parsed MDAST node (cached for performance) */
+  ast?: Content;
+}
+
+/**
+ * The currently streaming block (only one at a time).
+ * Re-renders on each new token.
+ */
+export interface ActiveBlock {
+  /** Type hint (may change as more content arrives) */
+  type: BlockType | null;
+  /** Current content being streamed */
+  content: string;
+  /** Start position in the full text */
+  startPos: number;
+}
+
+/**
+ * Block-specific metadata
+ */
+export type BlockMeta =
+  | { type: 'heading'; level: HeadingLevel }
+  | { type: 'codeBlock'; language: string }
+  | { type: 'list'; ordered: boolean; items: string[] }
+  | { type: 'table'; headers: string[]; rows: string[][] }
+  | { type: 'component'; name: string; props: Record<string, unknown> }
+  | { type: 'paragraph' | 'blockquote' | 'horizontalRule' | 'image' | 'footnote' };
+
+// ============================================================================
+// Block Registry (State Management)
+// ============================================================================
+
+// Forward declare for circular dependency avoidance
+export interface IncompleteTagState {
+  stack: Array<{ type: string; position: number; marker: string }>;
+  tagCounts: Record<string, number>;
+  previousTextLength: number;
+  earliestPosition: number;
+  inCodeBlock: boolean;
+  inInlineCode: boolean;
+}
+
+/**
+ * Central state for the streaming renderer.
+ * Immutable updates — each token creates a new registry.
+ */
+export interface BlockRegistry {
+  /** Completed blocks (never change after finalization) */
+  blocks: readonly StableBlock[];
+  /** Currently streaming block (null if between blocks) */
+  activeBlock: ActiveBlock | null;
+  /** Tag state for active block (tracks incomplete markdown) */
+  activeTagState: IncompleteTagState;
+  /** Cursor position — how much of the full text we've processed */
+  cursor: number;
+  /** Counter for generating unique block IDs */
+  blockCounter: number;
+}
+
+/**
+ * Initial empty registry state
+ * Note: activeTagState is set to a literal to avoid circular dependency
+ */
+export const INITIAL_REGISTRY: BlockRegistry = {
+  blocks: [],
+  activeBlock: null,
+  activeTagState: {
+    stack: [],
+    tagCounts: {},
+    previousTextLength: 0,
+    earliestPosition: 0,
+    inCodeBlock: false,
+    inInlineCode: false,
+  },
+  cursor: 0,
+  blockCounter: 0,
+};
+
+// ============================================================================
+// Component Injection
+// ============================================================================
+
+/**
+ * Definition of a component that can be injected via {{c:...}} syntax
+ */
+export interface ComponentDefinition<P = Record<string, unknown>> {
+  /** The React component to render */
+  component: ComponentType<P & { _isStreaming?: boolean }>;
+  /** JSON schema for props validation (optional) */
+  schema?: JSONSchema;
+}
+
+/**
+ * Registry of injectable components
  */
 export interface ComponentRegistry {
+  /** Get a component by name */
   get(name: string): ComponentDefinition | undefined;
-  validate(name: string, props: any): ValidationResult;
+  /** Check if a component exists */
   has(name: string): boolean;
+  /** Validate props against schema */
+  validate(name: string, props: unknown): ValidationResult;
 }
 
 /**
- * Component rendering metadata for progressive rendering
- */
-export interface ComponentRenderingMetadata {
-  fieldOrder?: string[]; // e.g., ['sym', 'name', 'price', 'change'] - render priority
-}
-
-/**
- * Component definition structure - matches existing registry
- */
-export interface ComponentDefinition {
-  name: string;
-  component: ComponentType<any>;
-  category: 'dynamic';
-  description?: string;
-  propsSchema: JSONSchema;
-  examples?: any[];
-  renderingMetadata?: ComponentRenderingMetadata;
-}
-
-/**
- * JSON Schema for prop validation - matches existing registry
+ * Simple JSON Schema subset for prop validation
  */
 export interface JSONSchema {
-  type: string;
-  properties?: Record<string, any>;
+  type: 'object';
+  properties: Record<string, { type: string; required?: boolean }>;
   required?: string[];
-  items?: JSONSchema;
-  [key: string]: any;
 }
 
 /**
- * Validation result - matches existing registry
+ * Validation result
  */
 export interface ValidationResult {
   valid: boolean;
   errors: string[];
 }
 
+// ============================================================================
+// Theme Configuration
+// ============================================================================
+
+/**
+ * Theme colors
+ */
+export interface ThemeColors {
+  background: string;
+  foreground: string;
+  muted: string;
+  accent: string;
+  codeBackground: string;
+  codeForeground: string;
+  border: string;
+  link: string;
+  // Syntax highlighting colors (Prism-compatible)
+  syntaxDefault: string;
+  syntaxKeyword: string;
+  syntaxString: string;
+  syntaxNumber: string;
+  syntaxComment: string;
+  syntaxFunction: string;
+  syntaxClass: string;
+  syntaxOperator: string;
+}
+
 /**
  * Theme configuration
  */
 export interface ThemeConfig {
-  colors: {
-    text: string;
-    background: string;
-    border: string;
-    link: string;
-    code: string;
-    codeBackground: string;
-    blockquote: string;
-    strong: string;
-    emphasis: string;
-    // Syntax highlighting colors
-    syntaxKeyword: string;
-    syntaxString: string;
-    syntaxNumber: string;
-    syntaxComment: string;
-    syntaxFunction: string;
-    syntaxClass: string;
-    syntaxOperator: string;
-    syntaxDefault: string;
-    // Code block UI colors
-    codeBlockBackground?: string;
-    codeBlockBorder?: string;
-    codeBlockHeaderBg?: string;
-    codeBlockHeaderText?: string;
-    codeBlockCopyButtonBg?: string;
-    codeBlockCopyButtonText?: string;
-    // Skeleton colors
-    skeletonBase: string;
-    skeletonHighlight: string;
-  };
+  colors: ThemeColors;
   fonts: {
-    body?: string;
-    code?: string;
-    heading?: string;
-    italic?: string;
+    regular: string;
+    bold: string;
+    mono: string;
   };
   spacing: {
-    paragraph: number;
-    heading: number;
-    list: number;
-    code: number;
+    block: number;      // Space between blocks
+    inline: number;     // Inline element spacing
+    indent: number;     // List/blockquote indent
   };
 }
 
-/**
- * Component error for error handling
- */
-export interface ComponentError {
-  componentName: string;
-  error: Error;
-  props?: any;
-}
+// ============================================================================
+// Debug/Observability
+// ============================================================================
 
 /**
- * Incomplete tag tracking state (internal use only, not exported)
- * Used for performance optimization during streaming
+ * Snapshot of the streaming state at a specific moment.
+ * Emitted via onDebug callback for observability.
  */
-interface IncompleteTag {
-  type: 'bold' | 'italic' | 'code' | 'codeBlock' | 'link' | 'component';
-  position: number;        // absolute position in text where tag starts
-  marker: string;          // opening marker: '**', '*', '`', '```', '[', '{{'
-  openingText?: string;    // text around marker (for debugging)
-}
-
-/**
- * State for tracking incomplete markdown tags during streaming
- * Internal use only - not exposed in public API
- */
-export interface IncompleteTagState {
-  // Stack of incomplete tags (bottom = earliest, top = latest)
-  stack: IncompleteTag[];
-  
-  // Cached value: position of earliest incomplete tag (bottom of stack)
-  // If stack empty, equals previousTextLength (no incomplete tags)
-  earliestPosition: number;
-  
-  // Previous text length to validate incremental updates
-  previousTextLength: number;
-  
-  // Tag type counts for quick lookup
-  tagCounts: {
-    bold: number;
-    italic: number;
-    code: number;
-    codeBlock: number;
-    link: number;
-    component: number;
+export interface DebugSnapshot {
+  /** Current position in the stream (cursor) */
+  position: number;
+  /** Total length of content processed so far */
+  totalLength: number;
+  /** New characters added in this update */
+  newChars: string;
+  /** Number of characters added */
+  newCharsCount: number;
+  /** Current block registry state (deep copy for safety) */
+  registry: {
+    /** Number of stable blocks */
+    stableBlockCount: number;
+    /** Stable blocks (id, type, contentLength) */
+    stableBlocks: Array<{
+      id: string;
+      type: BlockType;
+      contentLength: number;
+    }>;
+    /** Active block info */
+    activeBlock: {
+      type: BlockType | null;
+      contentLength: number;
+      content: string;
+    } | null;
+    /** Current tag state for incomplete markdown tracking */
+    tagState: IncompleteTagState;
   };
-  
-  // Code context tracking - are we inside code?
-  inCodeBlock: boolean;
-  inInlineCode: boolean;
+  /** Fixed markdown content (after auto-closing incomplete tags) */
+  fixedContent: string | null;
+  /** Timestamp (high-resolution) */
+  timestamp: number;
+  /** Time since last update in milliseconds */
+  deltaMs: number;
 }
 
-/**
- * Initial state for incomplete tag tracking
- */
-export const INITIAL_INCOMPLETE_STATE: IncompleteTagState = {
-  stack: [],
-  earliestPosition: 0,
-  previousTextLength: 0,
-  tagCounts: {
-    bold: 0,
-    italic: 0,
-    code: 0,
-    codeBlock: 0,
-    link: 0,
-    component: 0,
-  },
-  inCodeBlock: false,
-  inInlineCode: false,
-};
+// ============================================================================
+// Component Props
+// ============================================================================
 
 /**
- * Parsed component instance
- */
-export interface ComponentInstance {
-  id: string;
-  name: string;
-  component: ComponentType<any>;
-  props: any;
-  originalText: string;
-}
-
-/**
- * Markdown processing result
- */
-export interface ProcessedMarkdown {
-  markdown: string;
-  components: ComponentInstance[];
-}
-
-/**
- * JSON cleanup step for debugging
- */
-export interface JSONCleanupStep {
-  step: string;
-  before: string;
-  after: string;
-}
-
-/**
- * Component extraction state for debugging
- */
-export interface ComponentExtractionState {
-  completeComponents: Array<{ name: string; fields: string[] }>;
-  partialComponents: Array<{ name: string; fields: string[] }>;
-  emptyComponents: string[];
-  lastJSONCleanup?: {
-    original: string;
-    final: string;
-    steps: JSONCleanupStep[];
-    success: boolean;
-    error?: string;
-  };
-}
-
-/**
- * StreamdownRN component props
+ * Props for the main StreamdownRN component
  */
 export interface StreamdownRNProps {
-  /** The streaming markdown content */
+  /** Markdown content (streaming or complete) */
   children: string;
-  /** Optional component registry for dynamic components */
+  /** Component registry for {{c:...}} syntax */
   componentRegistry?: ComponentRegistry;
-  /** Theme configuration */
-  theme?: 'light' | 'dark' | ThemeConfig;
-  /** Style overrides for markdown elements (deep merged with theme styles) */
-  styleOverrides?: Partial<Record<string, any>>;
-  /** Error handler for component failures */
-  onComponentError?: (error: ComponentError) => void;
-  /** Additional styling */
-  style?: ViewStyle;
-  /** Callback for state updates (dev/debugging only) */
-  onStateUpdate?: (state: IncompleteTagState) => void;
-  /** Callback for component extraction updates (dev/debugging only) */
-  onComponentExtractionUpdate?: (state: ComponentExtractionState) => void;
+  /** Theme name or custom config */
+  theme?: 'dark' | 'light' | ThemeConfig;
+  /** Container style */
+  style?: object;
+  /** Error callback for component failures */
+  onError?: (error: Error, componentName?: string) => void;
+  /** 
+   * Debug callback — called on every content update.
+   * Use for observability, debugging, or testing.
+   * Only enable in development to avoid performance overhead.
+   */
+  onDebug?: (snapshot: DebugSnapshot) => void;
+}
+
+/**
+ * Props passed to block renderers
+ */
+export interface BlockRendererProps {
+  /** The block to render */
+  block: StableBlock;
+  /** Current theme configuration */
+  theme: ThemeConfig;
+  /** Component registry (for component blocks) */
+  componentRegistry?: ComponentRegistry;
+}
+
+/**
+ * Props for the active block renderer
+ */
+export interface ActiveBlockRendererProps {
+  /** The active block content */
+  block: ActiveBlock;
+  /** Current theme configuration */
+  theme: ThemeConfig;
+  /** Component registry (for streaming components) */
+  componentRegistry?: ComponentRegistry;
+}
+
+// ============================================================================
+// Utilities
+// ============================================================================
+
+/**
+ * Fast hash function (djb2) for content comparison.
+ * Used in React.memo to avoid deep equality checks.
+ */
+export function hashContent(str: string): number {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash) ^ str.charCodeAt(i);
+  }
+  return hash >>> 0; // Ensure unsigned
+}
+
+/**
+ * Generate a unique block ID
+ */
+export function generateBlockId(type: BlockType, counter: number): string {
+  const prefix = type === 'heading' ? 'h' :
+                 type === 'paragraph' ? 'p' :
+                 type === 'codeBlock' ? 'c' :
+                 type === 'list' ? 'l' :
+                 type === 'table' ? 't' :
+                 type === 'blockquote' ? 'q' :
+                 type === 'horizontalRule' ? 'hr' :
+                 type === 'image' ? 'img' :
+                 type === 'component' ? 'cmp' : 'b';
+  return `${prefix}-${counter}`;
 }
 

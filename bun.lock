@@ -76,6 +76,25 @@
       },
     },
     "packages/streamdown-rn": {
+      "name": "@darkresearch/streamdown-rn",
+      "version": "0.2.0",
+      "dependencies": {
+        "prismjs": "^1.29.0",
+        "react-native-syntax-highlighter": "^2.1.0",
+        "remark": "^15.0.1",
+        "remark-gfm": "^4.0.1",
+      },
+      "devDependencies": {
+        "@changesets/cli": "^2.29.7",
+        "@types/react": "~19.2.7",
+        "typescript": "~5.9.3",
+      },
+      "peerDependencies": {
+        "react": "^19.0.0",
+        "react-native": "^0.81.0",
+      },
+    },
+    "packages/streamdown-rn-old": {
       "name": "streamdown-rn",
       "version": "0.1.6",
       "dependencies": {
@@ -419,6 +438,8 @@
     "@changesets/write": ["@changesets/write@0.4.0", "", { "dependencies": { "@changesets/types": "^6.1.0", "fs-extra": "^7.0.1", "human-id": "^4.1.1", "prettier": "^2.7.1" } }, "sha512-CdTLvIOPiCNuH71pyDu3rA+Q0n65cmAbXnwWH84rKGiFumFzkmHNT8KHTMEchcxN+Kl8I54xGUhJ7l3E7X396Q=="],
 
     "@darkresearch/design-system": ["@darkresearch/design-system@workspace:packages/design-system"],
+
+    "@darkresearch/streamdown-rn": ["@darkresearch/streamdown-rn@workspace:packages/streamdown-rn"],
 
     "@expo-google-fonts/geist": ["@expo-google-fonts/geist@0.4.1", "", {}, "sha512-UOBwoTJkKC0ViMOS8gjlQyUcT/5PX0phCroz/8z0DP1+7FcoD1RGGeG//nVQYWbT3y/ze4XoE63gSunml9Wdbw=="],
 
@@ -1756,7 +1777,7 @@
 
     "stream-buffers": ["stream-buffers@2.2.0", "", {}, "sha512-uyQK/mx5QjHun80FLJTfaWE7JtwfRMKBLkMne6udYOmvH0CawotVa7TfgYHzAnpphn4+TweIx1QKMnRIbipmUg=="],
 
-    "streamdown-rn": ["streamdown-rn@workspace:packages/streamdown-rn"],
+    "streamdown-rn": ["streamdown-rn@workspace:packages/streamdown-rn-old"],
 
     "string-width": ["string-width@4.2.3", "", { "dependencies": { "emoji-regex": "^8.0.0", "is-fullwidth-code-point": "^3.0.0", "strip-ansi": "^6.0.1" } }, "sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g=="],
 

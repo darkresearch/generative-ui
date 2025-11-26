@@ -17,11 +17,13 @@ export {
 
 export {
   extractComponents,
+  extractPartialComponents,
   injectComponentPlaceholders,
   extractComponentOrder,
   removeComponentMarkers,
   validateComponentSyntax,
   getComponentStats,
+  getLastJSONCleanup,
 } from './core/componentInjector';
 
 // Types
@@ -33,11 +35,15 @@ export type {
   ProcessedMarkdown,
   ComponentError,
   ThemeConfig,
-  TypewriterConfig,
   ValidationResult,
   JSONSchema,
-  IncompletePatterns,
+  ComponentRenderingMetadata,
+  ComponentExtractionState,
 } from './core/types';
+
+// Progressive rendering components
+export { Progressive } from './renderers/Progressive';
+export { FieldSkeleton } from './renderers/FieldSkeleton';
 
 // Themes
 export { darkTheme, darkMarkdownStyles } from './themes/dark';

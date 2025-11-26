@@ -1,18 +1,23 @@
+/**
+ * Type declarations for react-native-syntax-highlighter
+ */
+
 declare module 'react-native-syntax-highlighter' {
-  import { ComponentType } from 'react';
+  import { ComponentType, ReactNode } from 'react';
+  import { TextStyle, ViewStyle } from 'react-native';
   
   interface SyntaxHighlighterProps {
-    children?: string;
+    children: string;
     language?: string;
-    highlighter?: 'hljs' | 'prism';
-    style?: any;
-    customStyle?: any;
-    CodeTag?: ComponentType<any>;
-    PreTag?: ComponentType<any>;
-    [key: string]: any;
+    style?: Record<string, TextStyle | { color?: string; background?: string }>;
+    customStyle?: ViewStyle & { backgroundColor?: string; padding?: number; margin?: number };
+    fontSize?: number;
+    fontFamily?: string;
+    highlighter?: 'prism' | 'hljs';
+    PreTag?: ComponentType<{ children: ReactNode; style?: ViewStyle }>;
+    CodeTag?: ComponentType<{ children: ReactNode; style?: TextStyle }>;
   }
   
   const SyntaxHighlighter: ComponentType<SyntaxHighlighterProps>;
   export default SyntaxHighlighter;
 }
-

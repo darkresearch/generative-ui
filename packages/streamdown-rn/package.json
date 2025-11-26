@@ -1,69 +1,48 @@
 {
-  "name": "streamdown-rn",
-  "version": "0.1.6",
-  "author": "Edgar Pavlovsky <edgar@darkresearch.ai>",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/darkresearch/streamdown-rn.git"
-  },
-  "homepage": "https://github.com/darkresearch/streamdown-rn#readme",
-  "bugs": {
-    "url": "https://github.com/darkresearch/streamdown-rn/issues"
-  },
+  "name": "@darkresearch/streamdown-rn",
+  "version": "0.2.0",
+  "description": "High-performance streaming markdown renderer for React Native with dynamic component injection",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "publishConfig": {
-    "access": "public"
+  "author": "Dark Research <engineering@darkresearch.ai>",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/darkresearch/generative-ui.git",
+    "directory": "packages/streamdown-rn"
   },
-  "dependencies": {
-    "expo-clipboard": "^8.0.0",
-    "highlight.js": "^11.11.1",
-    "react-native-svg": "^13.4.0",
-    "react-native-syntax-highlighter": "^2.1.0",
-    "react-native-webview": "^13.6.0",
-    "remark": "^15.0.1",
-    "remark-gfm": "^4.0.1",
-    "remark-math": "^6.0.0"
-  },
-  "peerDependencies": {
-    "react": ">=18.0.0",
-    "react-native": ">=0.70.0"
-  },
-  "devDependencies": {
-    "@babel/preset-env": "^7.28.5",
-    "@babel/preset-react": "^7.28.5",
-    "@babel/preset-typescript": "^7.28.5",
-    "@changesets/cli": "^2.29.7",
-    "@types/react": "~19.0.0",
-    "@types/react-native": "^0.73.0",
-    "fast-check": "^4.3.0",
-    "typescript": "^5.0.0"
-  },
-  "description": "React Native streaming markdown renderer with dynamic component injection",
-  "files": [
-    "src/",
-    "dist/",
-    "README.md",
-    "LICENSE"
-  ],
   "keywords": [
     "react-native",
     "markdown",
     "streaming",
     "ai",
-    "components",
-    "chat",
-    "llm"
+    "llm",
+    "generative-ui"
   ],
-  "license": "Apache-2.0",
   "scripts": {
-    "test": "bun test",
-    "type-check": "tsc --noEmit",
     "build": "tsc",
     "dev": "tsc --watch",
-    "prepublishOnly": "npm run build",
-    "changeset": "changeset",
-    "version": "changeset version",
-    "release": "changeset publish --provenance --access public"
-  }
+    "test": "bun test",
+    "type-check": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-native": "^0.81.0"
+  },
+  "dependencies": {
+    "prismjs": "^1.29.0",
+    "react-native-syntax-highlighter": "^2.1.0",
+    "remark": "^15.0.1",
+    "remark-gfm": "^4.0.1"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.29.7",
+    "@types/react": "~19.2.7",
+    "typescript": "~5.9.3"
+  },
+  "files": [
+    "src/",
+    "dist/",
+    "README.md"
+  ]
 }
