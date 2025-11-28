@@ -209,11 +209,7 @@ function renderNode(
       return renderCodeBlock(node as CodeNode, theme, key);
     
     case 'blockquote':
-      return (
-        <View key={key} style={blockStyles.blockquote}>
-          {renderChildren(node, theme, componentRegistry, isStreaming)}
-        </View>
-      );
+      return renderBlockquote(node, theme, componentRegistry, isStreaming, key);
     
     case 'list':
       return renderList(node as ListNode, theme, componentRegistry, isStreaming, key);
@@ -471,6 +467,38 @@ function renderListItemChild(
   
   // For other types, use normal rendering
   return renderNode(node, theme, componentRegistry, isStreaming, key);
+}
+
+/**
+ * Render a blockquote.
+ * Strips paragraph margins to prevent extra spacing at the end.
+ */
+function renderBlockquote(
+  node: { children?: Content[] },
+  theme: ThemeConfig,
+  componentRegistry?: ComponentRegistry,
+  isStreaming = false,
+  key?: string | number
+): ReactNode {
+  const styles = getTextStyles(theme);
+  const blockStyles = getBlockStyles(theme);
+  
+  return (
+    <View key={key} style={blockStyles.blockquote}>
+      {node.children?.map((child, index) => {
+        // For paragraphs inside blockquotes, render without bottom margin
+        if (child.type === 'paragraph') {
+          return (
+            <Text key={index} style={[styles.body, { marginBottom: 0 }]}>
+              {renderChildren(child, theme, componentRegistry, isStreaming)}
+            </Text>
+          );
+        }
+        // For other types, use normal rendering
+        return renderNode(child, theme, componentRegistry, isStreaming, index);
+      })}
+    </View>
+  );
 }
 
 /**

@@ -68,6 +68,26 @@ function endsWithPartialMarker(text: string, partial: string, full: string): boo
   return text.endsWith(partial) && !text.endsWith(full);
 }
 
+/**
+ * Extract trailing whitespace from text.
+ * Markdown closers must come before whitespace to parse correctly.
+ * e.g., "**bold " needs to become "**bold** " not "**bold **"
+ * 
+ * Only extracts spaces/tabs, NOT newlines - newlines are significant
+ * for block-level markdown (code blocks, lists, etc.)
+ */
+function extractTrailingWhitespace(text: string): { content: string; whitespace: string } {
+  // Only extract spaces and tabs, not newlines
+  const match = text.match(/([ \t]+)$/);
+  if (match) {
+    return {
+      content: text.slice(0, -match[1].length),
+      whitespace: match[1],
+    };
+  }
+  return { content: text, whitespace: '' };
+}
+
 // ============================================================================
 // State Management
 // ============================================================================
@@ -191,10 +211,19 @@ function rebuildTagState(fullText: string): IncompleteTagState {
       const isLastChar = i === fullText.length - 1;
       
       // SPECIAL CASE: If bold is open, italic is NOT open, and this is the last character,
-      // this * is likely the start of the closing ** (user still typing)
+      // this * is likely the start of the closing ** (user still typing).
+      // BUT: if this * immediately follows the bold opener (i.e., ***), it's opening italic.
       if (boldOpen && italicIdx === -1 && isLastChar) {
-        i++;
-        continue;
+        // Check if there's content between bold opener and this *
+        const boldTag = stack.find(t => t.type === 'bold');
+        const boldOpenerEnd = boldTag ? boldTag.position + 2 : 0; // ** is 2 chars
+        const hasContentBetween = i > boldOpenerEnd;
+        
+        // Only skip if there's content (e.g., "**bold*" not "***")
+        if (hasContentBetween) {
+          i++;
+          continue;
+        }
       }
       
       if (italicIdx !== -1) {
@@ -206,7 +235,8 @@ function rebuildTagState(fullText: string): IncompleteTagState {
       continue;
     }
     
-    // === Strikethrough: ~~ ===
+    // === Strikethrough: ~~ or ~ ===
+    // Support both single and double tilde (remark-gfm parses both as strikethrough)
     if (fullText.slice(i, i + 2) === '~~') {
       const strikeIdx = stack.findIndex(t => t.type === 'strikethrough');
       if (strikeIdx !== -1) {
@@ -218,32 +248,62 @@ function rebuildTagState(fullText: string): IncompleteTagState {
       continue;
     }
     
-    // === Link: [text](url) - track opening [ ===
+    // Single ~ also opens/closes strikethrough
+    if (fullText[i] === '~') {
+      const strikeTag = stack.find(t => t.type === 'strikethrough');
+      const isLastChar = i === fullText.length - 1;
+      
+      // SPECIAL CASE: If strikethrough was opened with ~~ and this is the last character,
+      // this ~ is likely the start of the closing ~~ (user still typing)
+      if (strikeTag && strikeTag.marker === '~~' && isLastChar) {
+        // Skip - treat as partial closer
+        i++;
+        continue;
+      }
+      
+      if (strikeTag) {
+        // Only close if markers match, or if single ~ closes single ~
+        if (strikeTag.marker === '~') {
+          removeTagFromStack(stack, tagCounts, 'strikethrough');
+        }
+        // If marker is ~~, don't close with single ~ (mismatched)
+      } else {
+        earliestPosition = addTagToStack(stack, tagCounts, 'strikethrough', i, '~', earliestPosition);
+      }
+      i++;
+      continue;
+    }
+    
+    // === Link: [text](url) ===
+    // Track link in two phases:
+    //   1. Text phase: marker='[' - waiting for ]( 
+    //   2. URL phase: marker='](' - waiting for )
+    
     if (fullText[i] === '[' && fullText[i + 1] !== '{') {
       earliestPosition = addTagToStack(stack, tagCounts, 'link', i, '[', earliestPosition);
       i++;
       continue;
     }
     
-    // Close link on ]( followed by )
-    if (fullText[i] === ']') {
-      const linkIdx = stack.findIndex(t => t.type === 'link');
-      if (linkIdx !== -1 && fullText[i + 1] === '(') {
-        let parenDepth = 1;
-        let j = i + 2;
-        while (j < fullText.length && parenDepth > 0) {
-          if (fullText[j] === '(') parenDepth++;
-          if (fullText[j] === ')') parenDepth--;
-          j++;
-        }
-        if (parenDepth === 0) {
-          removeTagFromStack(stack, tagCounts, 'link');
-          i = j;
-          continue;
-        }
+    // Transition from text phase to URL phase on ](
+    if (fullText[i] === ']' && fullText[i + 1] === '(') {
+      const linkIdx = stack.findIndex(t => t.type === 'link' && t.marker === '[');
+      if (linkIdx !== -1) {
+        // Transition to URL mode
+        stack[linkIdx].marker = '](';
+        i += 2; // Skip ](
+        continue;
       }
-      i++;
-      continue;
+    }
+    
+    // Close link on ) when in URL phase
+    if (fullText[i] === ')') {
+      const linkIdx = stack.findIndex(t => t.type === 'link' && t.marker === '](');
+      if (linkIdx !== -1) {
+        removeTagFromStack(stack, tagCounts, 'link');
+        i++;
+        continue;
+      }
     }
     
     i++;
@@ -298,11 +358,20 @@ export function fixIncompleteMarkdown(
   let fixed = text;
   const originalLength = text.length;
   
+  // Extract trailing whitespace - closers must come BEFORE whitespace for markdown to parse
+  // e.g., "**bold " → "**bold** " not "**bold **"
+  const { content, whitespace } = extractTrailingWhitespace(fixed);
+  fixed = content;
+  
   // Auto-close open tags in reverse order (innermost first)
   const reversedStack = [...state.stack].reverse();
   
+  // Track if we've already added closers (affects half-closer logic)
+  let closersAdded = 0;
+  
   for (const tag of reversedStack) {
-    fixed = closeTag(fixed, tag.type, text, originalLength);
+    fixed = closeTag(fixed, tag, text, originalLength, closersAdded);
+    closersAdded++;
   }
   
   // Complete incomplete ordered list markers (e.g., "1. First\n2" → "1. First\n2.")
@@ -311,17 +380,47 @@ export function fixIncompleteMarkdown(
   // Hide incomplete markers at the very end
   fixed = hideIncompleteMarkers(fixed);
   
-  return fixed;
+  // Re-add trailing whitespace after closers
+  return fixed + whitespace;
+}
+
+/**
+ * Check if text has a bold+italic opener (***) that would indicate
+ * a trailing * is closing italic, not being a partial bold closer.
+ */
+function hasBoldItalicOpener(text: string): boolean {
+  // Check for *** at start or after whitespace (not part of ****)
+  return /(^|[\s\n])\*\*\*[^*]/.test(text) || /^\*\*\*$/.test(text);
 }
 
 /**
  * Close a single tag by appending the appropriate closing marker
+ * 
+ * @param tag - The tag object (includes type, position, and marker)
+ * @param closersAdded - Number of closers already added (0 = first tag being closed)
+ *                       Used to determine if trailing * is a partial closer or a completed tag
  */
-function closeTag(fixed: string, tagType: string, originalText: string, originalLength: number): string {
-  switch (tagType) {
+function closeTag(
+  fixed: string, 
+  tag: { type: string; position: number; marker: string }, 
+  originalText: string, 
+  originalLength: number,
+  closersAdded: number
+): string {
+  // Only apply half-closer logic if this is the FIRST tag being closed.
+  // If closersAdded > 0, the trailing character was likely closing a different tag.
+  const isFirstClose = closersAdded === 0;
+  
+  switch (tag.type) {
     case 'bold':
       // SPECIAL CASE: If original text ends with single *, complete the ** closer
-      if (endsWithPartialMarker(originalText, '*', '**') && fixed.length === originalLength) {
+      // But only if:
+      // 1. This is the first close
+      // 2. There's no bold+italic opener (***) - if there is, trailing * closed italic
+      if (isFirstClose && 
+          endsWithPartialMarker(originalText, '*', '**') && 
+          fixed.length === originalLength &&
+          !hasBoldItalicOpener(originalText)) {
         return fixed + '*';
       }
       return fixed + '**';
@@ -333,11 +432,16 @@ function closeTag(fixed: string, tagType: string, originalText: string, original
       return fixed + '`';
       
     case 'strikethrough':
-      // SPECIAL CASE: If original text ends with single ~, complete the ~~ closer
-      if (endsWithPartialMarker(originalText, '~', '~~') && fixed.length === originalLength) {
-        return fixed + '~';
+      // Close with the same marker that was used to open (~ or ~~)
+      // remark-gfm requires matching delimiters
+      // SPECIAL CASE: If original text ends with single ~ and opened with ~~, complete the closer
+      if (tag.marker === '~~' && 
+          isFirstClose && 
+          endsWithPartialMarker(originalText, '~', '~~') && 
+          fixed.length === originalLength) {
+        return fixed + '~';  // Complete the ~~ closer
       }
-      return fixed + '~~';
+      return fixed + tag.marker;
       
     case 'codeBlock':
       // Add closing fence
@@ -349,6 +453,17 @@ function closeTag(fixed: string, tagType: string, originalText: string, original
       return fixed;
       
     case 'link':
+      // Two phases: text phase (marker='[') and URL phase (marker='](')
+      if (tag.marker === '](') {
+        // In URL phase - just need closing )
+        return fixed + ')';
+      }
+      // In text phase - check if ] already typed
+      if (fixed.endsWith(']')) {
+        // Already have ], just need (#)
+        return fixed + '(#)';
+      }
+      // Need full ](#) to create valid link
       return fixed + '](#)';
       
     default:
@@ -365,15 +480,32 @@ function hideIncompleteMarkers(text: string): string {
   let result = text;
   
   // === Hide empty inline formatting ===
+  // Order matters: check longer patterns first!
+  
+  // Empty bold+italic: "******" at end preceded by whitespace/start (***...*** with no content)
+  result = result.replace(/(^|[\s\n])\*\*\*\*\*\*$/g, '$1');
   
   // Empty bold: "****" at end preceded by whitespace/start
   result = result.replace(/(^|[\s\n])\*\*\*\*$/g, '$1');
   
-  // Empty italic: "**" at end preceded by whitespace/start (not a bold closer)
-  result = result.replace(/(^|[\s\n])\*\*$/g, '$1');
+  // Empty italic/bold: "**" at end - but ONLY if there's no opener before it
+  // This handles empty italic (*...*) while not breaking multi-word bold.
+  // Check: if "**" appears only once at the end preceded by whitespace/start, hide it.
+  // If there's content with ** before (like "**bold **"), don't hide.
+  const doubleAsteriskMatches = result.match(/\*\*/g);
+  if (doubleAsteriskMatches && doubleAsteriskMatches.length === 1 && /(^|[\s\n])\*\*$/.test(result)) {
+    result = result.replace(/(^|[\s\n])\*\*$/g, '$1');
+  }
   
-  // Empty strikethrough: "~~~~"
-  result = result.replace(/~~~~$/g, '');
+  // Empty strikethrough patterns (order matters: longer patterns first)
+  // "~~~~" = double tilde open (~~) + double tilde close (~~)
+  result = result.replace(/(^|[\s\n])~~~~$/g, '$1');
+  
+  // "~~" = single tilde open (~) + single tilde close (~)
+  result = result.replace(/(^|[\s\n])~~$/g, '$1');
+  
+  // Single tilde at end (incomplete strikethrough)
+  result = result.replace(/(^|[\s\n])~$/g, '$1');
   
   // === Hide pending backticks (building toward ``` or closing ```) ===
   
@@ -421,7 +553,7 @@ function hideIncompleteMarkers(text: string): string {
   // Two backticks at end (pending code block opening)
   result = result.replace(/(^|[\s\n])``$/g, '$1');
   
-  // === Hide incomplete components and links ===
+  // === Hide incomplete components ===
   
   // Incomplete component markers: [{c:"... without closing
   const componentMatch = result.match(/(\[\{c:\s*"[^}\]]*?)$/);
@@ -429,8 +561,16 @@ function hideIncompleteMarkers(text: string): string {
     result = result.slice(0, -componentMatch[1].length);
   }
   
-  // Incomplete links: [text](#) → just show [text]
-  result = result.replace(/\[([^\]]*)\]\(#\)$/g, '[$1]');
+  // === Hide incomplete links ===
+  
+  // Empty link with no text: "[](#)" - hide completely
+  result = result.replace(/(^|[\s\n])\[\]\(#\)$/g, '$1');
+  
+  // Single opening bracket with no content: "[" at end - hide it
+  result = result.replace(/(^|[\s\n])\[$/g, '$1');
+  
+  // DON'T hide [text](#) - that's a valid link with placeholder URL!
+  // Remark will parse it as a clickable link.
   
   return result;
 }

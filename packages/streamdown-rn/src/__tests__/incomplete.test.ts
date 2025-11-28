@@ -80,6 +80,20 @@ describe('Incomplete Markdown Handler', () => {
       expect(fixed).toBe('');
     });
     
+    it('should hide trailing *** (bold+italic) with no content', () => {
+      const state = updateTagState(INITIAL_INCOMPLETE_STATE, '***');
+      const fixed = fixIncompleteMarkdown('***', state);
+      // *** opens bold+italic, auto-closes to ******, should be hidden
+      expect(fixed).toBe('');
+    });
+    
+    it('should hide trailing *** after text with no content', () => {
+      const state = updateTagState(INITIAL_INCOMPLETE_STATE, 'Text ***');
+      const fixed = fixIncompleteMarkdown('Text ***', state);
+      // Should hide the empty bold+italic
+      expect(fixed).toBe('Text ');
+    });
+    
     it('should hide trailing ` with no content', () => {
       const state = updateTagState(INITIAL_INCOMPLETE_STATE, '`');
       const fixed = fixIncompleteMarkdown('`', state);
@@ -171,10 +185,24 @@ describe('Incomplete Markdown Handler', () => {
       expect(fix('**bold text')).toBe('**bold text**');
     });
     
+    it('should handle trailing whitespace in multi-word bold', () => {
+      // Trailing space must come AFTER closers for markdown to parse
+      // "**bold " → "**bold** " not "**bold **"
+      expect(fix('**bold ')).toBe('**bold** ');
+      expect(fix('**bold multi ')).toBe('**bold multi** ');
+      expect(fix('**bold  ')).toBe('**bold**  '); // Multiple spaces
+    });
+    
     it('should show italic formatting immediately when content starts', () => {
       expect(fix('*i')).toBe('*i*');
       expect(fix('*italic')).toBe('*italic*');
       expect(fix('*italic text')).toBe('*italic text*');
+    });
+    
+    it('should handle trailing whitespace in multi-word italic', () => {
+      // Trailing space must come AFTER closers for markdown to parse
+      expect(fix('*italic ')).toBe('*italic* ');
+      expect(fix('*italic multi ')).toBe('*italic multi* ');
     });
     
     it('should show inline code formatting immediately when content starts', () => {
@@ -182,9 +210,16 @@ describe('Incomplete Markdown Handler', () => {
       expect(fix('`code')).toBe('`code`');
     });
     
-    it('should show strikethrough formatting immediately when content starts', () => {
+    it('should show strikethrough formatting immediately when content starts (double tilde)', () => {
+      // Double tilde closes with double tilde (matching delimiters required)
       expect(fix('~~s')).toBe('~~s~~');
       expect(fix('~~strike')).toBe('~~strike~~');
+    });
+    
+    it('should show strikethrough formatting immediately when content starts (single tilde)', () => {
+      // Single tilde also works for strikethrough
+      expect(fix('~s')).toBe('~s~');
+      expect(fix('~strike')).toBe('~strike~');
     });
     
     it('should format bold in the middle of text', () => {
@@ -233,10 +268,20 @@ describe('Incomplete Markdown Handler', () => {
       expect(fix('**b*')).toBe('**b**');
     });
     
-    it('should handle trailing ~ as half of strikethrough closer', () => {
-      // When strikethrough is open and text ends with single ~, it's the start of ~~
-      expect(fix('~~strike~')).toBe('~~strike~~');
-      expect(fix('This is ~~strike~')).toBe('This is ~~strike~~');
+    it('should handle single ~ as strikethrough closer', () => {
+      // Single ~ closes single ~ strikethrough
+      expect(fix('~strike~')).toBe('~strike~');    // Already closed!
+    });
+    
+    it('should handle double ~~ as strikethrough closer', () => {
+      // Double ~~ closes double ~~ strikethrough
+      expect(fix('~~strike~~')).toBe('~~strike~~');  // Already closed!
+      expect(fix('This is ~~strike~~')).toBe('This is ~~strike~~');  // Already closed!
+    });
+    
+    it('should hide empty single tilde', () => {
+      expect(fix('~')).toBe('');
+      expect(fix('text ~')).toBe('text ');
     });
     
     it('should NOT treat trailing * as half closer when italic is also open', () => {
@@ -252,6 +297,58 @@ describe('Incomplete Markdown Handler', () => {
       expect(fix('This is **bold')).toBe('This is **bold**');
       expect(fix('This is **bold*')).toBe('This is **bold**'); // Half closer
       expect(fix('This is **bold**')).toBe('This is **bold**'); // Complete
+    });
+    
+    it('should correctly handle bold+italic (***) streaming', () => {
+      // Real streaming scenario: typing "***both***" character by character
+      // *** opens both bold AND italic
+      expect(fix('*')).toBe('');           // Single * hidden (empty italic)
+      expect(fix('**')).toBe('');          // ** hidden (empty bold)
+      expect(fix('***')).toBe('');         // *** hidden (empty bold+italic)
+      expect(fix('***b')).toBe('***b***'); // Content starts - show bold+italic!
+      expect(fix('***bo')).toBe('***bo***');
+      expect(fix('***bot')).toBe('***bot***');
+      expect(fix('***both')).toBe('***both***');
+      expect(fix('***both*')).toBe('***both***');   // First * of closer
+      expect(fix('***both**')).toBe('***both***');  // Second * of closer
+      expect(fix('***both***')).toBe('***both***'); // Complete!
+    });
+    
+    it('should correctly handle bold+italic in middle of text', () => {
+      expect(fix('Text ***')).toBe('Text ');           // Empty - hidden
+      expect(fix('Text ***b')).toBe('Text ***b***');   // Content starts
+      expect(fix('Text ***both')).toBe('Text ***both***');
+      expect(fix('Text ***both***')).toBe('Text ***both***'); // Complete
+    });
+    
+    it('should correctly handle strikethrough streaming (single tilde)', () => {
+      // Streaming ~strike~ character by character
+      expect(fix('~')).toBe('');           // Single ~ hidden (empty strikethrough)
+      expect(fix('~s')).toBe('~s~');       // Content starts - show strikethrough!
+      expect(fix('~st')).toBe('~st~');
+      expect(fix('~str')).toBe('~str~');
+      expect(fix('~stri')).toBe('~stri~');
+      expect(fix('~strik')).toBe('~strik~');
+      expect(fix('~strike')).toBe('~strike~');
+      expect(fix('~strike~')).toBe('~strike~'); // Complete!
+    });
+    
+    it('should correctly handle strikethrough streaming (double tilde)', () => {
+      // Streaming ~~strike~~ character by character
+      expect(fix('~')).toBe('');             // Single ~ hidden
+      expect(fix('~~')).toBe('');            // ~~ hidden (empty strikethrough)
+      expect(fix('~~s')).toBe('~~s~~');      // Content starts - close with matching ~~
+      expect(fix('~~st')).toBe('~~st~~');
+      expect(fix('~~strike')).toBe('~~strike~~');
+      expect(fix('~~strike~')).toBe('~~strike~~'); // First ~ is partial closer
+      expect(fix('~~strike~~')).toBe('~~strike~~'); // Complete!
+    });
+    
+    it('should correctly handle strikethrough in middle of text', () => {
+      expect(fix('Text ~')).toBe('Text ');           // Empty - hidden
+      expect(fix('Text ~s')).toBe('Text ~s~');       // Content starts
+      expect(fix('Text ~strike')).toBe('Text ~strike~');
+      expect(fix('Text ~strike~')).toBe('Text ~strike~'); // Complete
     });
   });
   
@@ -414,6 +511,76 @@ describe('Incomplete Markdown Handler', () => {
       expect(fix('1. First\n2. ')).toBe('1. First\n2. ');
       expect(fix('1. First\n2. S')).toBe('1. First\n2. S');
       expect(fix('1. First\n2. Second')).toBe('1. First\n2. Second');
+    });
+  });
+  
+  describe('Link handling', () => {
+    const fix = (input: string) => {
+      const state = updateTagState(INITIAL_INCOMPLETE_STATE, input);
+      return fixIncompleteMarkdown(input, state);
+    };
+    
+    it('should hide empty link bracket', () => {
+      expect(fix('[')).toBe('');
+      expect(fix('Check out [')).toBe('Check out ');
+    });
+    
+    it('should show link immediately when text starts', () => {
+      // As soon as there's text after [, show it as a link with # placeholder
+      expect(fix('[g')).toBe('[g](#)');
+      expect(fix('[google')).toBe('[google](#)');
+      expect(fix('[google link')).toBe('[google link](#)');
+    });
+    
+    it('should handle link with preceding text', () => {
+      expect(fix('Check out [g')).toBe('Check out [g](#)');
+      expect(fix('Check out [google')).toBe('Check out [google](#)');
+    });
+    
+    it('should transition to URL mode on ]( ', () => {
+      expect(fix('[google](')).toBe('[google]()');
+      expect(fix('[google](h')).toBe('[google](h)');
+      expect(fix('[google](https://')).toBe('[google](https://)');
+      expect(fix('[google](https://google.com')).toBe('[google](https://google.com)');
+    });
+    
+    it('should complete link when ) is typed', () => {
+      // Complete link should pass through unchanged
+      expect(fix('[google](https://google.com)')).toBe('[google](https://google.com)');
+    });
+    
+    it('should handle link streaming character by character', () => {
+      // Simulate streaming "[google](https://google.com)"
+      expect(fix('[')).toBe('');
+      expect(fix('[g')).toBe('[g](#)');
+      expect(fix('[go')).toBe('[go](#)');
+      expect(fix('[goo')).toBe('[goo](#)');
+      expect(fix('[goog')).toBe('[goog](#)');
+      expect(fix('[googl')).toBe('[googl](#)');
+      expect(fix('[google')).toBe('[google](#)');
+      expect(fix('[google]')).toBe('[google](#)'); // ] already typed, just add (#)
+      expect(fix('[google](')).toBe('[google]()');
+      expect(fix('[google](h')).toBe('[google](h)');
+      expect(fix('[google](ht')).toBe('[google](ht)');
+      expect(fix('[google](htt')).toBe('[google](htt)');
+      expect(fix('[google](http')).toBe('[google](http)');
+      expect(fix('[google](https')).toBe('[google](https)');
+      expect(fix('[google](https:')).toBe('[google](https:)');
+      expect(fix('[google](https:/')).toBe('[google](https:/)');
+      expect(fix('[google](https://')).toBe('[google](https://)');
+      expect(fix('[google](https://g')).toBe('[google](https://g)');
+      expect(fix('[google](https://google.com')).toBe('[google](https://google.com)');
+      expect(fix('[google](https://google.com)')).toBe('[google](https://google.com)');
+    });
+    
+    it('should not confuse links with component syntax', () => {
+      // Component syntax starts with [{ - not treated as a link
+      // [{  and [{c are shown until we're sure it's a component (has c:")
+      expect(fix('[{')).toBe('[{');
+      expect(fix('[{c')).toBe('[{c');
+      // Once we have [{c:" we know it's a component and hide it
+      expect(fix('[{c:"')).toBe('');
+      expect(fix('[{c:"Button')).toBe('');
     });
   });
 });
