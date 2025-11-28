@@ -247,11 +247,12 @@ export interface DebugSnapshot {
   registry: {
     /** Number of stable blocks */
     stableBlockCount: number;
-    /** Stable blocks (id, type, contentLength) */
+    /** Stable blocks with preview content */
     stableBlocks: Array<{
       id: string;
       type: BlockType;
       contentLength: number;
+      content: string;
     }>;
     /** Active block info */
     activeBlock: {

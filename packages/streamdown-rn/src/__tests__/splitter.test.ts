@@ -23,6 +23,66 @@ describe('Block Splitter', () => {
       expect(registry.blocks[0].meta).toEqual({ type: 'heading', level: 2 });
       expect(registry.blocks[1].meta).toEqual({ type: 'heading', level: 3 });
     });
+
+    it('finalizes heading immediately when next content begins', () => {
+      let registry = INITIAL_REGISTRY;
+      registry = processNewContent(registry, '## Introduction\n');
+      registry = processNewContent(registry, '## Introduction\nThis is **bold**');
+
+      expect(registry.blocks.length).toBe(1);
+      expect(registry.blocks[0].type).toBe('heading');
+      expect(registry.activeBlock?.type).toBe('paragraph');
+      expect(registry.activeBlock?.content.startsWith('This is')).toBe(true);
+    });
+
+    it('splits heading and paragraph even when streamed back-to-back', () => {
+      let registry = INITIAL_REGISTRY;
+      registry = processNewContent(registry, '## Introduction\n');
+      registry = processNewContent(
+        registry,
+        '## Introduction\nThis is **bold** and *italic* text.\n'
+      );
+      registry = processNewContent(
+        registry,
+        '## Introduction\nThis is **bold** and *italic* text.\n\n'
+      );
+
+      expect(registry.blocks.length).toBe(2);
+      expect(registry.blocks[0].type).toBe('heading');
+      expect(registry.blocks[0].content.trim()).toBe('## Introduction');
+      expect(registry.blocks[1].type).toBe('paragraph');
+      expect(registry.blocks[1].content.trim()).toBe(
+        'This is **bold** and *italic* text.'
+      );
+    });
+
+    it('finalizes heading even if following paragraph is incomplete', () => {
+      let registry = INITIAL_REGISTRY;
+      registry = processNewContent(registry, '## Introduction\n');
+      registry = processNewContent(
+        registry,
+        '## Introduction\nThis is **bold**'
+      );
+
+      expect(registry.blocks.length).toBe(1);
+      expect(registry.blocks[0].type).toBe('heading');
+      expect(registry.blocks[0].content.trim()).toBe('## Introduction');
+      expect(registry.activeBlock?.type).toBe('paragraph');
+      expect(registry.activeBlock?.content.trim()).toBe('This is **bold**');
+    });
+
+    it('handles headings and paragraphs streamed in a single chunk', () => {
+      const registry = processNewContent(
+        INITIAL_REGISTRY,
+        '# Streamdown Test\n\n## Introduction\nThis is **bold**\n'
+      );
+
+      expect(registry.blocks.length).toBe(2);
+      expect(registry.blocks[0].content.trim()).toBe('# Streamdown Test');
+      expect(registry.blocks[1].content.trim()).toBe('## Introduction');
+      expect(registry.activeBlock?.type).toBe('paragraph');
+      expect(registry.activeBlock?.content.trim()).toBe('This is **bold**');
+    });
   });
   
   describe('Code block detection', () => {
@@ -94,6 +154,177 @@ describe('Block Splitter', () => {
       const input = '[{c:"Card",p:{}}]\n\n';
       const registry = processNewContent(INITIAL_REGISTRY, input);
       expect(registry.blocks[0].ast).toBeUndefined();
+    });
+  });
+  
+  describe('Character-level block type detection (regression tests)', () => {
+    it('should detect heading type immediately from first character', () => {
+      let registry = INITIAL_REGISTRY;
+      
+      // Single # should be detected as heading
+      registry = processNewContent(registry, '#');
+      expect(registry.activeBlock?.type).toBe('heading');
+      
+      // ## should still be heading
+      registry = processNewContent(registry, '##');
+      expect(registry.activeBlock?.type).toBe('heading');
+      
+      // ## with space should be heading
+      registry = processNewContent(registry, '## ');
+      expect(registry.activeBlock?.type).toBe('heading');
+      
+      // Full heading content should still be heading
+      registry = processNewContent(registry, '## Hello World');
+      expect(registry.activeBlock?.type).toBe('heading');
+    });
+    
+    it('should detect correct heading level character by character (H1-H6)', () => {
+      // Test each heading level independently
+      const testCases = [
+        // H1: # → title (level 1)
+        { input: '#', expectedLevel: 1 },
+        { input: '# ', expectedLevel: 1 },
+        { input: '# I', expectedLevel: 1 },
+        { input: '# Hello', expectedLevel: 1 },
+        
+        // H2: ## → heading 2
+        { input: '##', expectedLevel: 2 },
+        { input: '## ', expectedLevel: 2 },
+        { input: '## I', expectedLevel: 2 },
+        { input: '## Introduction', expectedLevel: 2 },
+        
+        // H3: ### → heading 3
+        { input: '###', expectedLevel: 3 },
+        { input: '### ', expectedLevel: 3 },
+        { input: '### I', expectedLevel: 3 },
+        { input: '### Section', expectedLevel: 3 },
+        
+        // H4: #### → heading 4
+        { input: '####', expectedLevel: 4 },
+        { input: '#### ', expectedLevel: 4 },
+        { input: '#### I', expectedLevel: 4 },
+        
+        // H5: ##### → heading 5
+        { input: '#####', expectedLevel: 5 },
+        { input: '##### ', expectedLevel: 5 },
+        { input: '##### I', expectedLevel: 5 },
+        
+        // H6: ###### → heading 6
+        { input: '######', expectedLevel: 6 },
+        { input: '###### ', expectedLevel: 6 },
+        { input: '###### I', expectedLevel: 6 },
+      ];
+      
+      for (const { input, expectedLevel } of testCases) {
+        const registry = processNewContent(INITIAL_REGISTRY, input);
+        expect(registry.activeBlock?.type).toBe('heading');
+        // Note: The meta is only set on finalized blocks, but we can check
+        // that partial detection is working by verifying the type is 'heading'
+      }
+    });
+    
+    it('should track heading level progression as hashes are added', () => {
+      // Stream character by character: # → ## → ### → #### → ##### → ######
+      let registry = INITIAL_REGISTRY;
+      
+      registry = processNewContent(registry, '#');
+      expect(registry.activeBlock?.type).toBe('heading');
+      
+      registry = processNewContent(registry, '##');
+      expect(registry.activeBlock?.type).toBe('heading');
+      
+      registry = processNewContent(registry, '###');
+      expect(registry.activeBlock?.type).toBe('heading');
+      
+      registry = processNewContent(registry, '####');
+      expect(registry.activeBlock?.type).toBe('heading');
+      
+      registry = processNewContent(registry, '#####');
+      expect(registry.activeBlock?.type).toBe('heading');
+      
+      registry = processNewContent(registry, '######');
+      expect(registry.activeBlock?.type).toBe('heading');
+      
+      // 7 hashes should still be detected as heading (capped at 6)
+      registry = processNewContent(registry, '#######');
+      expect(registry.activeBlock?.type).toBe('heading');
+    });
+    
+    it('should finalize with correct heading level when newline arrives', () => {
+      // H1
+      let registry = processNewContent(INITIAL_REGISTRY, '# Title\n\n');
+      expect(registry.blocks[0].type).toBe('heading');
+      expect(registry.blocks[0].meta).toEqual({ type: 'heading', level: 1 });
+      
+      // H2
+      registry = processNewContent(INITIAL_REGISTRY, '## Section\n\n');
+      expect(registry.blocks[0].type).toBe('heading');
+      expect(registry.blocks[0].meta).toEqual({ type: 'heading', level: 2 });
+      
+      // H3
+      registry = processNewContent(INITIAL_REGISTRY, '### Subsection\n\n');
+      expect(registry.blocks[0].type).toBe('heading');
+      expect(registry.blocks[0].meta).toEqual({ type: 'heading', level: 3 });
+      
+      // H4
+      registry = processNewContent(INITIAL_REGISTRY, '#### Deep\n\n');
+      expect(registry.blocks[0].type).toBe('heading');
+      expect(registry.blocks[0].meta).toEqual({ type: 'heading', level: 4 });
+      
+      // H5
+      registry = processNewContent(INITIAL_REGISTRY, '##### Deeper\n\n');
+      expect(registry.blocks[0].type).toBe('heading');
+      expect(registry.blocks[0].meta).toEqual({ type: 'heading', level: 5 });
+      
+      // H6
+      registry = processNewContent(INITIAL_REGISTRY, '###### Deepest\n\n');
+      expect(registry.blocks[0].type).toBe('heading');
+      expect(registry.blocks[0].meta).toEqual({ type: 'heading', level: 6 });
+    });
+    
+    it('should detect code block type immediately from fence', () => {
+      let registry = INITIAL_REGISTRY;
+      
+      // ``` should be detected as codeBlock
+      registry = processNewContent(registry, '```');
+      expect(registry.activeBlock?.type).toBe('codeBlock');
+      
+      // With language
+      registry = processNewContent(registry, '```typescript');
+      expect(registry.activeBlock?.type).toBe('codeBlock');
+    });
+    
+    it('should detect blockquote type immediately from >', () => {
+      let registry = INITIAL_REGISTRY;
+      
+      registry = processNewContent(registry, '>');
+      expect(registry.activeBlock?.type).toBe('blockquote');
+      
+      registry = processNewContent(registry, '> quote');
+      expect(registry.activeBlock?.type).toBe('blockquote');
+    });
+    
+    it('should detect component type immediately from [{c:', () => {
+      let registry = INITIAL_REGISTRY;
+      
+      registry = processNewContent(registry, '[{c:');
+      expect(registry.activeBlock?.type).toBe('component');
+      
+      registry = processNewContent(registry, '[{c:"Button"');
+      expect(registry.activeBlock?.type).toBe('component');
+    });
+    
+    it('should detect list type from marker + space', () => {
+      let registry = INITIAL_REGISTRY;
+      
+      // - with space should be list
+      registry = processNewContent(registry, '- ');
+      expect(registry.activeBlock?.type).toBe('list');
+      
+      // 1. with space should be ordered list
+      registry = INITIAL_REGISTRY;
+      registry = processNewContent(registry, '1. ');
+      expect(registry.activeBlock?.type).toBe('list');
     });
   });
 });

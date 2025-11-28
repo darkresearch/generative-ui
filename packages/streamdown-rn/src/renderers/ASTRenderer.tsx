@@ -1,24 +1,157 @@
 /**
  * AST Renderer
  * 
- * Recursively renders MDAST (Markdown AST) nodes to React Native components.
- * Supports full GitHub Flavored Markdown via remark-gfm.
+ * THE single source of truth for rendering MDAST nodes to React Native.
+ * Handles all GitHub Flavored Markdown via remark-gfm.
+ * 
+ * Includes:
+ * - All block-level nodes (paragraph, heading, code, blockquote, list, table, hr, image)
+ * - All inline nodes (text, strong, emphasis, delete, code, link, break)
+ * - Custom component injection via [{c:"Name",p:{...}}] syntax
+ * - Syntax highlighting for code blocks
  */
 
 import React, { ReactNode } from 'react';
-import { Text, View } from 'react-native';
-import type { Content, Parent } from 'mdast';
-import type { ThemeConfig, ComponentRegistry } from '../core/types';
-import { getTextStyles } from '../themes';
-import { extractComponentData } from '../blocks';
+import { Text, View, ScrollView, Image, Platform } from 'react-native';
+import SyntaxHighlighter from 'react-native-syntax-highlighter';
+import type { Content, Parent, Table as TableNode, Code as CodeNode, List as ListNode, Image as ImageNode } from 'mdast';
+import type { ThemeConfig, ComponentRegistry, StableBlock } from '../core/types';
+import { getTextStyles, getBlockStyles } from '../themes';
+
+// ============================================================================
+// Syntax Highlighting Utilities
+// ============================================================================
+
+/**
+ * Map common language aliases to Prism language names
+ */
+function normalizeLanguage(lang: string): string {
+  const aliases: Record<string, string> = {
+    'js': 'javascript',
+    'ts': 'typescript',
+    'tsx': 'tsx',
+    'jsx': 'jsx',
+    'py': 'python',
+    'rb': 'ruby',
+    'sh': 'bash',
+    'shell': 'bash',
+    'zsh': 'bash',
+    'yml': 'yaml',
+    'md': 'markdown',
+    'json5': 'json',
+    'dockerfile': 'docker',
+  };
+  return aliases[lang.toLowerCase()] || lang.toLowerCase();
+}
+
+/**
+ * Create Prism syntax style from theme colors
+ */
+function createSyntaxStyle(theme: ThemeConfig) {
+  return {
+    'pre[class*="language-"]': {
+      color: theme.colors.syntaxDefault,
+      background: 'transparent',
+    },
+    'token': { color: theme.colors.syntaxDefault },
+    'keyword': { color: theme.colors.syntaxKeyword },
+    'builtin': { color: theme.colors.syntaxOperator },
+    'class-name': { color: theme.colors.syntaxClass },
+    'function': { color: theme.colors.syntaxFunction },
+    'string': { color: theme.colors.syntaxString },
+    'number': { color: theme.colors.syntaxNumber },
+    'operator': { color: theme.colors.syntaxOperator },
+    'comment': { color: theme.colors.syntaxComment },
+    'punctuation': { color: theme.colors.syntaxDefault },
+    'property': { color: theme.colors.syntaxClass },
+    'constant': { color: theme.colors.syntaxNumber },
+    'boolean': { color: theme.colors.syntaxNumber },
+    'tag': { color: theme.colors.syntaxKeyword },
+    'attr-name': { color: theme.colors.syntaxString },
+    'attr-value': { color: theme.colors.syntaxString },
+    'selector': { color: theme.colors.syntaxClass },
+    'regex': { color: theme.colors.syntaxString },
+  };
+}
+
+// ============================================================================
+// Component Extraction
+// ============================================================================
+
+/**
+ * Extract component name and props from [{c:"Name",p:{...}}] syntax
+ */
+export function extractComponentData(content: string): { name: string; props: Record<string, unknown> } {
+  const nameMatch = content.match(/\[\{c:\s*"([^"]+)"/);
+  if (!nameMatch) {
+    return { name: '', props: {} };
+  }
+  
+  const name = nameMatch[1];
+  
+  // Try to parse props - complete syntax
+  const propsMatch = content.match(/\[\{c:\s*"[^"]+"\s*,\s*p:\s*(\{[\s\S]*\})\s*\}\]/);
+  let props: Record<string, unknown> = {};
+  
+  if (propsMatch) {
+    try {
+      props = JSON.parse(propsMatch[1]);
+    } catch {
+      // Parse error — try to close incomplete JSON for streaming
+      try {
+        let propsJson = propsMatch[1];
+        let depth = 0;
+        for (const char of propsJson) {
+          if (char === '{') depth++;
+          if (char === '}') depth--;
+        }
+        while (depth > 0) {
+          propsJson += '}';
+          depth--;
+        }
+        props = JSON.parse(propsJson);
+      } catch {
+        // Still can't parse — use empty props
+      }
+    }
+  } else {
+    // Try partial match for streaming (no closing }])
+    const partialMatch = content.match(/\[\{c:\s*"[^"]+"\s*,\s*p:\s*(\{[\s\S]*)/);
+    if (partialMatch) {
+      try {
+        let propsJson = partialMatch[1];
+        let depth = 0;
+        for (const char of propsJson) {
+          if (char === '{') depth++;
+          if (char === '}') depth--;
+        }
+        while (depth > 0) {
+          propsJson += '}';
+          depth--;
+        }
+        props = JSON.parse(propsJson);
+      } catch {
+        // Can't parse yet
+      }
+    }
+  }
+  
+  return { name, props };
+}
+
+// ============================================================================
+// Main Component
+// ============================================================================
 
 export interface ASTRendererProps {
   /** MDAST node to render */
   node: Content;
   /** Theme configuration */
   theme: ThemeConfig;
-  /** Component registry for inline components */
+  /** Component registry for custom components */
   componentRegistry?: ComponentRegistry;
+  /** Whether this is streaming (for components) */
+  isStreaming?: boolean;
 }
 
 /**
@@ -30,9 +163,14 @@ export const ASTRenderer: React.FC<ASTRendererProps> = ({
   node,
   theme,
   componentRegistry,
+  isStreaming = false,
 }) => {
-  return <>{renderNode(node, theme, componentRegistry)}</>;
+  return <>{renderNode(node, theme, componentRegistry, isStreaming)}</>;
 };
+
+// ============================================================================
+// Node Rendering
+// ============================================================================
 
 /**
  * Render a single MDAST node
@@ -41,9 +179,11 @@ function renderNode(
   node: Content,
   theme: ThemeConfig,
   componentRegistry?: ComponentRegistry,
+  isStreaming = false,
   key?: string | number
 ): ReactNode {
   const styles = getTextStyles(theme);
+  const blockStyles = getBlockStyles(theme);
   
   switch (node.type) {
     // ========================================================================
@@ -53,7 +193,7 @@ function renderNode(
     case 'paragraph':
       return (
         <Text key={key} style={styles.paragraph}>
-          {renderChildren(node, theme, componentRegistry)}
+          {renderChildren(node, theme, componentRegistry, isStreaming)}
         </Text>
       );
     
@@ -61,52 +201,47 @@ function renderNode(
       const headingStyle = styles[`heading${node.depth}` as keyof typeof styles];
       return (
         <Text key={key} style={headingStyle}>
-          {renderChildren(node, theme, componentRegistry)}
+          {renderChildren(node, theme, componentRegistry, isStreaming)}
         </Text>
       );
     
     case 'code':
-      // Code blocks are handled by CodeBlock component
-      // This shouldn't be reached if blocks handle it
-      return (
-        <Text key={key} style={styles.code}>
-          {node.value}
-        </Text>
-      );
+      return renderCodeBlock(node as CodeNode, theme, key);
     
     case 'blockquote':
       return (
-        <View key={key} style={{ borderLeftWidth: 4, borderLeftColor: theme.colors.muted, paddingLeft: 16 }}>
-          <Text style={[styles.paragraph, { fontStyle: 'italic' }]}>
-            {renderChildren(node, theme, componentRegistry)}
-          </Text>
+        <View key={key} style={blockStyles.blockquote}>
+          {renderChildren(node, theme, componentRegistry, isStreaming)}
         </View>
       );
     
     case 'list':
-      return (
-        <View key={key}>
-          {node.children.map((item, index) => renderNode(item, theme, componentRegistry, index))}
-        </View>
-      );
+      return renderList(node as ListNode, theme, componentRegistry, isStreaming, key);
     
     case 'listItem':
       return (
         <View key={key} style={{ flexDirection: 'row', marginBottom: 4 }}>
           <Text style={styles.body}>• </Text>
           <View style={{ flex: 1 }}>
-            {renderChildren(node, theme, componentRegistry)}
+            {renderChildren(node, theme, componentRegistry, isStreaming)}
           </View>
         </View>
       );
     
     case 'thematicBreak':
       return (
-        <View key={key} style={{
-          height: 1,
-          backgroundColor: theme.colors.border,
-          marginVertical: theme.spacing.block,
-        }} />
+        <View key={key} style={blockStyles.horizontalRule} />
+      );
+    
+    case 'table':
+      return renderTable(node as TableNode, theme, componentRegistry, isStreaming, key);
+    
+    case 'html':
+      // Render HTML as plain text (React Native doesn't support HTML)
+      return (
+        <Text key={key} style={[styles.code, { color: theme.colors.muted }]}>
+          {node.value}
+        </Text>
       );
     
     // ========================================================================
@@ -116,21 +251,21 @@ function renderNode(
     case 'text':
       // Check if text contains inline component syntax
       if (node.value.includes('[{c:')) {
-        return renderTextWithComponents(node.value, theme, componentRegistry, key);
+        return renderTextWithComponents(node.value, theme, componentRegistry, isStreaming, key);
       }
       return node.value;
     
     case 'strong':
       return (
         <Text key={key} style={styles.bold}>
-          {renderChildren(node, theme, componentRegistry)}
+          {renderChildren(node, theme, componentRegistry, isStreaming)}
         </Text>
       );
     
     case 'emphasis':
       return (
         <Text key={key} style={styles.italic}>
-          {renderChildren(node, theme, componentRegistry)}
+          {renderChildren(node, theme, componentRegistry, isStreaming)}
         </Text>
       );
     
@@ -138,7 +273,7 @@ function renderNode(
       // GFM strikethrough
       return (
         <Text key={key} style={styles.strikethrough}>
-          {renderChildren(node, theme, componentRegistry)}
+          {renderChildren(node, theme, componentRegistry, isStreaming)}
         </Text>
       );
     
@@ -155,32 +290,24 @@ function renderNode(
           key={key}
           style={styles.link}
           accessibilityRole="link"
-          // TODO: Add onPress for link navigation
         >
-          {renderChildren(node, theme, componentRegistry)}
+          {renderChildren(node, theme, componentRegistry, isStreaming)}
         </Text>
       );
     
     case 'image':
-      // Inline image (if in text context, render as placeholder)
-      return (
-        <Text key={key} style={styles.link}>
-          [Image: {node.alt || node.url}]
-        </Text>
-      );
+      return renderImage(node as ImageNode, theme, key);
     
     case 'break':
       return '\n';
     
     // ========================================================================
-    // GFM-specific nodes
+    // GFM-specific nodes (handled above or ignored)
     // ========================================================================
     
-    case 'table':
     case 'tableRow':
     case 'tableCell':
-      // Tables are handled by Table block component
-      // These shouldn't be reached individually
+      // Handled by renderTable
       return null;
     
     case 'footnoteReference':
@@ -198,7 +325,7 @@ function renderNode(
     // ========================================================================
     
     default:
-      console.warn('Unhandled MDAST node type:', (node as any).type);
+      console.warn('Unhandled MDAST node type:', (node as Content).type);
       return null;
   }
 }
@@ -209,25 +336,251 @@ function renderNode(
 function renderChildren(
   node: Parent,
   theme: ThemeConfig,
-  componentRegistry?: ComponentRegistry
+  componentRegistry?: ComponentRegistry,
+  isStreaming = false
 ): ReactNode {
   if (!('children' in node) || !node.children) {
     return null;
   }
   
   return node.children.map((child, index) =>
-    renderNode(child as Content, theme, componentRegistry, index)
+    renderNode(child as Content, theme, componentRegistry, isStreaming, index)
+  );
+}
+
+// ============================================================================
+// Specialized Renderers
+// ============================================================================
+
+/**
+ * Render a code block with syntax highlighting
+ */
+function renderCodeBlock(
+  node: CodeNode,
+  theme: ThemeConfig,
+  key?: string | number
+): ReactNode {
+  const blockStyles = getBlockStyles(theme);
+  const code = node.value.replace(/\n+$/, ''); // Trim trailing newlines
+  const language = node.lang || 'text';
+  const normalizedLanguage = normalizeLanguage(language);
+  const syntaxStyle = createSyntaxStyle(theme);
+  
+  return (
+    <View key={key} style={blockStyles.codeBlock}>
+      {language && language !== 'text' && (
+        <Text style={{
+          color: theme.colors.muted,
+          fontSize: 12,
+          marginBottom: 8,
+          fontFamily: theme.fonts.mono,
+        }}>
+          {language}
+        </Text>
+      )}
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ flexGrow: 1 }}
+      >
+        <SyntaxHighlighter
+          language={normalizedLanguage}
+          style={syntaxStyle}
+          highlighter="prism"
+          customStyle={{
+            backgroundColor: 'transparent',
+            padding: 0,
+            margin: 0,
+          }}
+          fontSize={14}
+          fontFamily={Platform.select({
+            ios: 'Menlo',
+            android: 'monospace',
+            web: 'monospace',
+            default: 'monospace',
+          })}
+        >
+          {code}
+        </SyntaxHighlighter>
+      </ScrollView>
+    </View>
+  );
+}
+
+/**
+ * Render a list (ordered or unordered)
+ */
+function renderList(
+  node: ListNode,
+  theme: ThemeConfig,
+  componentRegistry?: ComponentRegistry,
+  isStreaming = false,
+  key?: string | number
+): ReactNode {
+  const styles = getTextStyles(theme);
+  const ordered = node.ordered ?? false;
+  
+  return (
+    <View key={key} style={{ marginBottom: theme.spacing.block }}>
+      {node.children.map((item, index) => (
+        <View key={index} style={{ flexDirection: 'row', marginBottom: 4 }}>
+          <Text style={[styles.body, { width: 24 }]}>
+            {ordered ? `${index + 1}.` : '•'}
+          </Text>
+          <View style={{ flex: 1 }}>
+            {item.children.map((child, childIndex) =>
+              renderListItemChild(child as Content, theme, componentRegistry, isStreaming, childIndex)
+            )}
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/**
+ * Render a child node inside a list item.
+ * Strips paragraph margins to prevent double-spacing in lists.
+ */
+function renderListItemChild(
+  node: Content,
+  theme: ThemeConfig,
+  componentRegistry?: ComponentRegistry,
+  isStreaming = false,
+  key?: string | number
+): ReactNode {
+  const styles = getTextStyles(theme);
+  
+  // For paragraphs inside list items, render without margin
+  if (node.type === 'paragraph') {
+    return (
+      <Text key={key} style={[styles.body, { marginBottom: 0 }]}>
+        {renderChildren(node, theme, componentRegistry, isStreaming)}
+      </Text>
+    );
+  }
+  
+  // For nested lists, render with reduced margin
+  if (node.type === 'list') {
+    return (
+      <View key={key} style={{ marginTop: 4, marginBottom: 0 }}>
+        {renderList(node as ListNode, theme, componentRegistry, isStreaming)}
+      </View>
+    );
+  }
+  
+  // For other types, use normal rendering
+  return renderNode(node, theme, componentRegistry, isStreaming, key);
+}
+
+/**
+ * Render a table
+ */
+function renderTable(
+  node: TableNode,
+  theme: ThemeConfig,
+  componentRegistry?: ComponentRegistry,
+  isStreaming = false,
+  key?: string | number
+): ReactNode {
+  const styles = getTextStyles(theme);
+  const rows = node.children;
+  
+  if (rows.length === 0) return null;
+  
+  const headerRow = rows[0];
+  const bodyRows = rows.slice(1);
+  
+  return (
+    <View key={key} style={{ marginBottom: theme.spacing.block }}>
+      {/* Header */}
+      <View style={{ 
+        flexDirection: 'row', 
+        borderBottomWidth: 2, 
+        borderBottomColor: theme.colors.border,
+        paddingBottom: 8,
+        marginBottom: 8,
+      }}>
+        {headerRow.children.map((cell, cellIndex) => (
+          <View key={cellIndex} style={{ flex: 1, paddingHorizontal: 8 }}>
+            <Text style={[styles.bold, { fontSize: 14 }]}>
+              {cell.children.map((child, childIndex) =>
+                renderNode(child as Content, theme, componentRegistry, isStreaming, childIndex)
+              )}
+            </Text>
+          </View>
+        ))}
+      </View>
+      
+      {/* Body */}
+      {bodyRows.map((row, rowIndex) => (
+        <View key={rowIndex} style={{ 
+          flexDirection: 'row',
+          borderBottomWidth: 1,
+          borderBottomColor: theme.colors.border,
+          paddingVertical: 8,
+        }}>
+          {row.children.map((cell, cellIndex) => (
+            <View key={cellIndex} style={{ flex: 1, paddingHorizontal: 8 }}>
+              <Text style={styles.body}>
+                {cell.children.map((child, childIndex) =>
+                  renderNode(child as Content, theme, componentRegistry, isStreaming, childIndex)
+                )}
+              </Text>
+            </View>
+          ))}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/**
+ * Render an image
+ */
+function renderImage(
+  node: ImageNode,
+  theme: ThemeConfig,
+  key?: string | number
+): ReactNode {
+  const styles = getTextStyles(theme);
+  
+  // For now, render as a placeholder with alt text
+  // Full image support would require Image component with dimensions
+  if (!node.url) {
+    return null;
+  }
+  
+  return (
+    <View key={key} style={{ marginVertical: theme.spacing.block }}>
+      <Image
+        source={{ uri: node.url }}
+        style={{ 
+          width: '100%', 
+          height: 200, 
+          borderRadius: 8,
+          backgroundColor: theme.colors.codeBackground,
+        }}
+        resizeMode="contain"
+        accessibilityLabel={node.alt || 'Image'}
+      />
+      {node.alt && (
+        <Text style={[styles.body, { color: theme.colors.muted, marginTop: 4, textAlign: 'center' }]}>
+          {node.alt}
+        </Text>
+      )}
+    </View>
   );
 }
 
 /**
  * Render text that may contain inline component syntax
- * Falls back to component detection for [{c:...}] syntax
  */
 function renderTextWithComponents(
   text: string,
   theme: ThemeConfig,
   componentRegistry?: ComponentRegistry,
+  isStreaming = false,
   key?: string | number
 ): ReactNode {
   // Look for inline components
@@ -268,11 +621,126 @@ function renderTextWithComponents(
   return (
     <>
       {before}
-      <Component key={key} {...props} _isInline={true} />
-      {renderTextWithComponents(after, theme, componentRegistry, `${key}-after`)}
+      <Component key={key} {...props} _isInline={true} _isStreaming={isStreaming} />
+      {renderTextWithComponents(after, theme, componentRegistry, isStreaming, `${key}-after`)}
     </>
   );
 }
+
+// ============================================================================
+// Block-level Component Renderer (for StableBlock with type='component')
+// ============================================================================
+
+export interface ComponentBlockProps {
+  theme: ThemeConfig;
+  componentRegistry?: ComponentRegistry;
+  /** StableBlock input */
+  block?: StableBlock;
+  /** Direct component name (when not using block) */
+  componentName?: string;
+  /** Direct props (when not using block) */
+  props?: Record<string, unknown>;
+  /** Whether streaming (for active blocks) */
+  isStreaming?: boolean;
+}
+
+/**
+ * Render a block-level custom component
+ */
+export const ComponentBlock: React.FC<ComponentBlockProps> = React.memo(
+  ({ theme, componentRegistry, block, componentName: directName, props: directProps, isStreaming = false }) => {
+    // Determine name and props from either source
+    let componentName: string;
+    let props: Record<string, unknown>;
+    
+    if (block) {
+      const meta = block.meta as { type: 'component'; name: string; props: Record<string, unknown> };
+      if (meta.name) {
+        componentName = meta.name;
+        props = meta.props || {};
+      } else {
+        const extracted = extractComponentData(block.content);
+        componentName = extracted.name;
+        props = extracted.props;
+      }
+    } else {
+      componentName = directName ?? '';
+      props = directProps ?? {};
+    }
+    
+    // No component name yet (still streaming)
+    if (!componentName) {
+      return (
+        <View style={{
+          padding: 12,
+          backgroundColor: theme.colors.codeBackground,
+          borderRadius: 8,
+          marginBottom: theme.spacing.block,
+        }}>
+          <Text style={{ color: theme.colors.muted }}>
+            Loading component...
+          </Text>
+        </View>
+      );
+    }
+    
+    // No registry provided
+    if (!componentRegistry) {
+      return (
+        <View style={{
+          padding: 12,
+          backgroundColor: theme.colors.codeBackground,
+          borderRadius: 8,
+          marginBottom: theme.spacing.block,
+        }}>
+          <Text style={{ color: theme.colors.muted }}>
+            ⚠️ No component registry provided
+          </Text>
+        </View>
+      );
+    }
+    
+    // Component not found
+    const componentDef = componentRegistry.get(componentName);
+    if (!componentDef) {
+      return (
+        <View style={{
+          padding: 12,
+          backgroundColor: theme.colors.codeBackground,
+          borderRadius: 8,
+          marginBottom: theme.spacing.block,
+        }}>
+          <Text style={{ color: theme.colors.muted }}>
+            ⚠️ Unknown component: {componentName}
+          </Text>
+        </View>
+      );
+    }
+    
+    const Component = componentDef.component;
+    
+    return (
+      <View style={{ marginBottom: theme.spacing.block }}>
+        <Component {...props} _isStreaming={isStreaming} />
+      </View>
+    );
+  },
+  (prev, next) => {
+    if (prev.block && next.block) {
+      return prev.block.contentHash === next.block.contentHash;
+    }
+    return (
+      prev.componentName === next.componentName &&
+      JSON.stringify(prev.props) === JSON.stringify(next.props)
+    );
+  }
+);
+
+ComponentBlock.displayName = 'ComponentBlock';
+
+// ============================================================================
+// Exports
+// ============================================================================
 
 /**
  * Render a complete MDAST tree (for testing)
@@ -280,8 +748,8 @@ function renderTextWithComponents(
 export function renderAST(
   nodes: Content[],
   theme: ThemeConfig,
-  componentRegistry?: ComponentRegistry
+  componentRegistry?: ComponentRegistry,
+  isStreaming = false
 ): ReactNode {
-  return nodes.map((node, index) => renderNode(node, theme, componentRegistry, index));
+  return nodes.map((node, index) => renderNode(node, theme, componentRegistry, isStreaming, index));
 }
-

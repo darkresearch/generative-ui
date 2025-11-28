@@ -100,6 +100,7 @@ export const StreamdownRN: React.FC<StreamdownRNProps> = React.memo(({
           id: block.id,
           type: block.type,
           contentLength: block.content.length,
+          content: block.content,
         })),
         activeBlock: registry.activeBlock ? {
           type: registry.activeBlock.type,
@@ -109,7 +110,7 @@ export const StreamdownRN: React.FC<StreamdownRNProps> = React.memo(({
         tagState: { ...registry.activeTagState },
       },
       fixedContent: registry.activeBlock 
-        ? fixIncompleteMarkdown(registry.activeBlock.content, registry.activeTagState).fixed
+        ? fixIncompleteMarkdown(registry.activeBlock.content, registry.activeTagState)
         : null,
       timestamp: now,
       deltaMs,

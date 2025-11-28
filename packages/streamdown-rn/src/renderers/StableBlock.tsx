@@ -7,8 +7,7 @@
 
 import React from 'react';
 import type { StableBlock as StableBlockType, ThemeConfig, ComponentRegistry } from '../core/types';
-import { ASTRenderer } from './ASTRenderer';
-import { ComponentBlock } from '../blocks';
+import { ASTRenderer, ComponentBlock } from './ASTRenderer';
 
 interface StableBlockProps {
   block: StableBlockType;

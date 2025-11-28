@@ -1,0 +1,18 @@
+# Expo / React Native
+.expo/
+.expo-shared/
+node_modules/
+
+# Bundler output
+dist/
+web-build/
+
+# Logs & OS files
+*.log
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+

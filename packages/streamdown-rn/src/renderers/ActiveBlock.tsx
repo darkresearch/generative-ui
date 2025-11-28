@@ -13,8 +13,7 @@ import React from 'react';
 import type { ActiveBlock as ActiveBlockType, ThemeConfig, ComponentRegistry, IncompleteTagState } from '../core/types';
 import { fixIncompleteMarkdown } from '../core/incomplete';
 import { parseBlockContent } from '../core/parser';
-import { ASTRenderer } from './ASTRenderer';
-import { ComponentBlock, extractComponentData } from '../blocks';
+import { ASTRenderer, ComponentBlock, extractComponentData } from './ASTRenderer';
 
 interface ActiveBlockProps {
   block: ActiveBlockType | null;
@@ -67,6 +66,7 @@ export const ActiveBlock: React.FC<ActiveBlockProps> = ({
         node={ast}
         theme={theme}
         componentRegistry={componentRegistry}
+        isStreaming={true}
       />
     );
   }
