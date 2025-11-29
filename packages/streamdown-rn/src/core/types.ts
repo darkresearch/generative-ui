@@ -5,7 +5,7 @@
  * Optimized for append-only AI response streams.
  */
 
-import type { ComponentType } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import type { Content } from 'mdast';
 
 // ============================================================================
@@ -144,11 +144,17 @@ export const INITIAL_REGISTRY: BlockRegistry = {
 // ============================================================================
 
 /**
- * Definition of a component that can be injected via {{c:...}} syntax
+ * Definition of a component that can be injected via [{c:...}] syntax
  */
 export interface ComponentDefinition<P = Record<string, unknown>> {
   /** The React component to render */
-  component: ComponentType<P & { _isStreaming?: boolean }>;
+  component: ComponentType<P & { _isStreaming?: boolean; children?: ReactNode }>;
+  /** 
+   * Skeleton component to render while streaming.
+   * Receives partial props available so far.
+   * Should render skeleton placeholders for missing props.
+   */
+  skeletonComponent?: ComponentType<Partial<P> & { _isStreaming?: boolean; children?: ReactNode }>;
   /** JSON schema for props validation (optional) */
   schema?: JSONSchema;
 }

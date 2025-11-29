@@ -574,13 +574,28 @@ describe('Incomplete Markdown Handler', () => {
     });
     
     it('should not confuse links with component syntax', () => {
-      // Component syntax starts with [{ - not treated as a link
-      // [{  and [{c are shown until we're sure it's a component (has c:")
-      expect(fix('[{')).toBe('[{');
-      expect(fix('[{c')).toBe('[{c');
-      // Once we have [{c:" we know it's a component and hide it
+      // Component syntax starts with [{ - all incomplete component syntax is hidden
+      // This ensures clean UX while streaming components
+      expect(fix('[{')).toBe('');
+      expect(fix('[{c')).toBe('');
+      expect(fix('[{c:')).toBe('');
       expect(fix('[{c:"')).toBe('');
       expect(fix('[{c:"Button')).toBe('');
+      expect(fix('[{c:"Button",p:{')).toBe('');
+    });
+    
+    it('should not add link completion inside component children arrays', () => {
+      // The [ in children:[ should NOT be treated as a link opener
+      // So no ](#) should be added at the end
+      const base = '[{c:"Canvas",p:{"style":{}},children:[';
+      expect(fix(base)).toBe(base);  // No link completion added
+      expect(fix(base + '\n  ')).toBe(base + '\n  ');
+      expect(fix(base + '\n  {c:"Card"')).toBe(base + '\n  {c:"Card"');
+      
+      // After component closes, regular link syntax should work again
+      expect(fix('[{c:"Button",p:{}}]')).toBe('[{c:"Button",p:{}}]');
+      expect(fix('[{c:"Button",p:{}}] [')).toBe('[{c:"Button",p:{}}] ');
+      expect(fix('[{c:"Button",p:{}}] [link')).toBe('[{c:"Button",p:{}}] [link](#)');
     });
   });
 });

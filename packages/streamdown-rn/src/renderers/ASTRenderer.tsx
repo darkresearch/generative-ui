@@ -17,6 +17,7 @@ import SyntaxHighlighter from 'react-native-syntax-highlighter';
 import type { Content, Parent, Table as TableNode, Code as CodeNode, List as ListNode, Image as ImageNode } from 'mdast';
 import type { ThemeConfig, ComponentRegistry, StableBlock } from '../core/types';
 import { getTextStyles, getBlockStyles } from '../themes';
+import { extractComponentData, type ComponentData } from '../core/componentParser';
 
 // ============================================================================
 // Syntax Highlighting Utilities
@@ -75,69 +76,10 @@ function createSyntaxStyle(theme: ThemeConfig) {
 }
 
 // ============================================================================
-// Component Extraction
+// Component Extraction (re-export for backwards compatibility)
 // ============================================================================
 
-/**
- * Extract component name and props from [{c:"Name",p:{...}}] syntax
- */
-export function extractComponentData(content: string): { name: string; props: Record<string, unknown> } {
-  const nameMatch = content.match(/\[\{c:\s*"([^"]+)"/);
-  if (!nameMatch) {
-    return { name: '', props: {} };
-  }
-  
-  const name = nameMatch[1];
-  
-  // Try to parse props - complete syntax
-  const propsMatch = content.match(/\[\{c:\s*"[^"]+"\s*,\s*p:\s*(\{[\s\S]*\})\s*\}\]/);
-  let props: Record<string, unknown> = {};
-  
-  if (propsMatch) {
-    try {
-      props = JSON.parse(propsMatch[1]);
-    } catch {
-      // Parse error — try to close incomplete JSON for streaming
-      try {
-        let propsJson = propsMatch[1];
-        let depth = 0;
-        for (const char of propsJson) {
-          if (char === '{') depth++;
-          if (char === '}') depth--;
-        }
-        while (depth > 0) {
-          propsJson += '}';
-          depth--;
-        }
-        props = JSON.parse(propsJson);
-      } catch {
-        // Still can't parse — use empty props
-      }
-    }
-  } else {
-    // Try partial match for streaming (no closing }])
-    const partialMatch = content.match(/\[\{c:\s*"[^"]+"\s*,\s*p:\s*(\{[\s\S]*)/);
-    if (partialMatch) {
-      try {
-        let propsJson = partialMatch[1];
-        let depth = 0;
-        for (const char of propsJson) {
-          if (char === '{') depth++;
-          if (char === '}') depth--;
-        }
-        while (depth > 0) {
-          propsJson += '}';
-          depth--;
-        }
-        props = JSON.parse(propsJson);
-      } catch {
-        // Can't parse yet
-      }
-    }
-  }
-  
-  return { name, props };
-}
+export { extractComponentData, type ComponentData };
 
 // ============================================================================
 // Main Component
@@ -668,18 +610,49 @@ export interface ComponentBlockProps {
   componentName?: string;
   /** Direct props (when not using block) */
   props?: Record<string, unknown>;
+  /** CSS Grid-like style for layout positioning */
+  style?: Record<string, unknown>;
+  /** Direct children (when not using block) */
+  children?: ComponentData[];
   /** Whether streaming (for active blocks) */
   isStreaming?: boolean;
 }
 
 /**
- * Render a block-level custom component
+ * Render error/fallback states for components.
+ */
+function renderComponentError(theme: ThemeConfig, message: string): ReactNode {
+  return (
+    <View style={{
+      padding: 12,
+      backgroundColor: theme.colors.codeBackground,
+      borderRadius: 8,
+      marginBottom: theme.spacing.block,
+    }}>
+      <Text style={{ color: theme.colors.muted }}>{message}</Text>
+    </View>
+  );
+}
+
+/**
+ * Render a block-level custom component with skeleton and children support.
  */
 export const ComponentBlock: React.FC<ComponentBlockProps> = React.memo(
-  ({ theme, componentRegistry, block, componentName: directName, props: directProps, isStreaming = false }) => {
-    // Determine name and props from either source
+  ({ 
+    theme, 
+    componentRegistry, 
+    block, 
+    componentName: directName, 
+    props: directProps,
+    style: directStyle,
+    children: directChildren,
+    isStreaming = false,
+  }) => {
+    // Extract component data from block or direct props
     let componentName: string;
     let props: Record<string, unknown>;
+    let style: Record<string, unknown> | undefined;
+    let children: ComponentData[] | undefined;
     
     if (block) {
       const meta = block.meta as { type: 'component'; name: string; props: Record<string, unknown> };
@@ -690,66 +663,73 @@ export const ComponentBlock: React.FC<ComponentBlockProps> = React.memo(
         const extracted = extractComponentData(block.content);
         componentName = extracted.name;
         props = extracted.props;
+        style = extracted.style;
+        children = extracted.children;
       }
     } else {
       componentName = directName ?? '';
       props = directProps ?? {};
+      style = directStyle;
+      children = directChildren;
     }
     
-    // No component name yet (still streaming)
+    // No component name yet (still streaming) - render nothing
+    // The component will appear once we have enough to show its skeleton
     if (!componentName) {
-      return (
-        <View style={{
-          padding: 12,
-          backgroundColor: theme.colors.codeBackground,
-          borderRadius: 8,
-          marginBottom: theme.spacing.block,
-        }}>
-          <Text style={{ color: theme.colors.muted }}>
-            Loading component...
-          </Text>
-        </View>
-      );
+      return null;
     }
     
     // No registry provided
     if (!componentRegistry) {
-      return (
-        <View style={{
-          padding: 12,
-          backgroundColor: theme.colors.codeBackground,
-          borderRadius: 8,
-          marginBottom: theme.spacing.block,
-        }}>
-          <Text style={{ color: theme.colors.muted }}>
-            ⚠️ No component registry provided
-          </Text>
-        </View>
-      );
+      return renderComponentError(theme, '⚠️ No component registry provided');
     }
     
     // Component not found
     const componentDef = componentRegistry.get(componentName);
     if (!componentDef) {
+      return renderComponentError(theme, `⚠️ Unknown component: ${componentName}`);
+    }
+    
+    // Render children recursively if present, passing style for layout
+    const renderedChildren = children?.length ? (
+      children.map((child, index) => (
+        <ComponentBlock
+          key={index}
+          theme={theme}
+          componentRegistry={componentRegistry}
+          componentName={child.name}
+          props={child.props}
+          style={child.style}
+          children={child.children}
+          isStreaming={isStreaming}
+        />
+      ))
+    ) : undefined;
+    
+    // Merge props.style (component config) with layout style (positioning)
+    // props.style = component-specific config (e.g., Canvas gridTemplateColumns)
+    // style = layout positioning in parent (e.g., gridColumn: "span 2")
+    const mergedStyle = { ...(props.style as object), ...style };
+    
+    // When streaming, prefer skeleton component if available
+    if (isStreaming && componentDef.skeletonComponent) {
+      const SkeletonComponent = componentDef.skeletonComponent;
       return (
-        <View style={{
-          padding: 12,
-          backgroundColor: theme.colors.codeBackground,
-          borderRadius: 8,
-          marginBottom: theme.spacing.block,
-        }}>
-          <Text style={{ color: theme.colors.muted }}>
-            ⚠️ Unknown component: {componentName}
-          </Text>
+        <View style={{ marginBottom: theme.spacing.block }}>
+          <SkeletonComponent {...props} style={mergedStyle} _isStreaming={true}>
+            {renderedChildren}
+          </SkeletonComponent>
         </View>
       );
     }
     
+    // Render the main component
     const Component = componentDef.component;
-    
     return (
       <View style={{ marginBottom: theme.spacing.block }}>
-        <Component {...props} _isStreaming={isStreaming} />
+        <Component {...props} style={mergedStyle} _isStreaming={isStreaming}>
+          {renderedChildren}
+        </Component>
       </View>
     );
   },
@@ -759,7 +739,9 @@ export const ComponentBlock: React.FC<ComponentBlockProps> = React.memo(
     }
     return (
       prev.componentName === next.componentName &&
-      JSON.stringify(prev.props) === JSON.stringify(next.props)
+      prev.isStreaming === next.isStreaming &&
+      JSON.stringify(prev.props) === JSON.stringify(next.props) &&
+      JSON.stringify(prev.children) === JSON.stringify(next.children)
     );
   }
 );

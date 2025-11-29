@@ -129,6 +129,8 @@ function rebuildTagState(fullText: string): IncompleteTagState {
   let earliestPosition = 0;
   let inCodeBlock = false;
   let inInlineCode = false;
+  let inComponent = false;  // Track if we're inside a component [{...}]
+  let componentBraceDepth = 0;  // Track nested braces inside component
   
   let i = 0;
   while (i < fullText.length) {
@@ -169,6 +171,38 @@ function rebuildTagState(fullText: string): IncompleteTagState {
     
     // Skip everything else inside code blocks
     if (inCodeBlock) {
+      i++;
+      continue;
+    }
+    
+    // === Component detection: [{ ===
+    // When we see [{, we're entering component DSL - skip markdown processing
+    if (fullText.slice(i, i + 2) === '[{') {
+      inComponent = true;
+      componentBraceDepth = 1;  // The { after [
+      i += 2;
+      continue;
+    }
+    
+    // Track braces inside component to know when we exit
+    if (inComponent) {
+      // Check for closing }] BEFORE updating depth
+      // Component is complete when we see }] at depth 1 (the outermost brace)
+      if (fullText.slice(i, i + 2) === '}]' && componentBraceDepth === 1) {
+        inComponent = false;
+        componentBraceDepth = 0;
+        i += 2;
+        continue;
+      }
+      
+      // Track nested braces
+      if (fullText[i] === '{') {
+        componentBraceDepth++;
+      } else if (fullText[i] === '}') {
+        componentBraceDepth--;
+      }
+      
+      // Skip all markdown processing inside components
       i++;
       continue;
     }
@@ -555,8 +589,13 @@ function hideIncompleteMarkers(text: string): string {
   
   // === Hide incomplete components ===
   
-  // Incomplete component markers: [{c:"... without closing
-  const componentMatch = result.match(/(\[\{c:\s*"[^}\]]*?)$/);
+  // Hide any incomplete component syntax at end:
+  // - [{           (just started)
+  // - [{c          (typing key)
+  // - [{c:         (after colon)
+  // - [{c:"...     (typing name)
+  // - [{c:"Name",p:{...  (typing props)
+  const componentMatch = result.match(/(\[\{[^}\]]*?)$/);
   if (componentMatch) {
     result = result.slice(0, -componentMatch[1].length);
   }
