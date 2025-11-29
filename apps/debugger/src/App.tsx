@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { StreamdownRN, type DebugSnapshot } from '@darkresearch/streamdown-rn';
 import { PRESETS } from './presets';
+import { debugComponentRegistry } from './debugComponents';
 
 const WS_URL = 'ws://localhost:3001';
 
@@ -256,7 +257,10 @@ export default function App() {
               contentContainerStyle={styles.previewContent}
               nestedScrollEnabled
             >
-              <StreamdownRN onDebug={setSnapshot}>
+              <StreamdownRN
+                componentRegistry={debugComponentRegistry}
+                onDebug={setSnapshot}
+              >
                 {streamedContent}
               </StreamdownRN>
             </ScrollView>

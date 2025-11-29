@@ -8,7 +8,8 @@ export const PRESETS = {
   incomplete_bold: 'This is **bold but never clo',
   incomplete_code: '```javascript\nconst x = 1\n// no closing fence',
   incomplete_link: 'Check out [this link](https://exa',
-  component: 'Here is a button:\n\n[{c:"Button",p:{"label":"Click"}}]\n\nMore text.',
+  component:
+    'Here is a status card:\n\n[{c:"StatusCard",p:{"title":"On-call","description":"Pager rotation for week 42","priority":1,"tickets":7}}]\n\nMore text.',
   kitchen_sink: `# Streamdown Test
 
 ## Introduction
