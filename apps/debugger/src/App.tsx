@@ -260,6 +260,7 @@ export default function App() {
               <StreamdownRN
                 componentRegistry={debugComponentRegistry}
                 onDebug={setSnapshot}
+                isComplete={position >= fullContent.length}
               >
                 {streamedContent}
               </StreamdownRN>

@@ -20,7 +20,7 @@ import type {
   DebugSnapshot,
 } from './core/types';
 import { INITIAL_REGISTRY } from './core/types';
-import { processNewContent } from './core/splitter';
+import { processNewContent, finalizeActiveBlock } from './core/splitter';
 import { fixIncompleteMarkdown } from './core/incomplete';
 import { getTheme } from './themes';
 import { StableBlock } from './renderers/StableBlock';
@@ -45,6 +45,7 @@ export const StreamdownRN: React.FC<StreamdownRNProps> = React.memo(({
   style,
   onError,
   onDebug,
+  isComplete = false,
 }) => {
   // Persistent registry reference — survives across renders
   const registryRef = useRef<BlockRegistry>(INITIAL_REGISTRY);
@@ -69,7 +70,15 @@ export const StreamdownRN: React.FC<StreamdownRNProps> = React.memo(({
     
     try {
       // Process from where we left off
-      const updated = processNewContent(registryRef.current, children);
+      let updated = processNewContent(registryRef.current, children);
+      
+      // When streaming is complete, finalize the active block
+      // This ensures the last block is properly memoized and components
+      // transition from skeleton to final state
+      if (isComplete && updated.activeBlock) {
+        updated = finalizeActiveBlock(updated);
+      }
+      
       registryRef.current = updated;
       return updated;
     } catch (error) {
@@ -77,7 +86,7 @@ export const StreamdownRN: React.FC<StreamdownRNProps> = React.memo(({
       onError?.(error instanceof Error ? error : new Error(String(error)));
       return registryRef.current;
     }
-  }, [children, onError]);
+  }, [children, onError, isComplete]);
   
   // Emit debug snapshot when content changes (effect to avoid render-time side effects)
   useEffect(() => {
@@ -158,10 +167,11 @@ export const StreamdownRN: React.FC<StreamdownRNProps> = React.memo(({
   );
 }, (prev, next) => {
   // Custom comparison for memo
-  // Re-render if content, theme, or registry changes
+  // Re-render if content, theme, or isComplete changes
   return (
     prev.children === next.children &&
-    prev.theme === next.theme
+    prev.theme === next.theme &&
+    prev.isComplete === next.isComplete
   );
 });
 

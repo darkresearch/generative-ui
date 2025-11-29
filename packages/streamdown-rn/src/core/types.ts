@@ -301,6 +301,13 @@ export interface StreamdownRNProps {
    * Only enable in development to avoid performance overhead.
    */
   onDebug?: (snapshot: DebugSnapshot) => void;
+  /**
+   * Signal that streaming is complete.
+   * When true, finalizes the active block into a stable block.
+   * This ensures the last block is properly memoized and components
+   * transition from skeleton to final state.
+   */
+  isComplete?: boolean;
 }
 
 /**
