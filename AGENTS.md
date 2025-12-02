@@ -16,8 +16,8 @@ generative-ui/
 
 **How they relate**:
 - Apps use `@darkresearch/design-system` for UI
-- Apps use `@darkresearch/galerie-rn` for generative canvas
-- Galerie uses `@darkresearch/streamdown-rn` for parsing
+- Apps use `galerie-rn` for generative canvas
+- Galerie uses `streamdown-rn` for parsing
 
 ## Development Flow
 

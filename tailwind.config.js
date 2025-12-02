@@ -1,6 +1,17 @@
 /** @type {import('tailwindcss').Config} */
 const path = require('path');
 
+// Define constants for base colors and opacities
+const BG_COLOR = '#EEEDED';
+const FG_COLOR = '#262626';
+const FG_RGBA = (alpha) => `rgba(38, 38, 38, ${alpha})`;
+const FG_10 = FG_RGBA(0.1);
+const FG_20 = FG_RGBA(0.2);
+const FG_5 = FG_RGBA(0.05);
+const FG_60 = FG_RGBA(0.6);
+const RED = '#DC2626';
+const WHITE = '#FFFFFF';
+
 module.exports = {
   content: [
     path.resolve(__dirname, './apps/**/*.{js,jsx,ts,tsx}'),
@@ -12,51 +23,50 @@ module.exports = {
       colors: {
         // Dark Design System - Base Colors
         dark: {
-          bg: '#EEEDED',
-          fg: '#262626',
+          bg: BG_COLOR,
+          fg: FG_COLOR,
         },
-        
+
         // React Native Reusables Semantic Tokens
-        // Mapped to Dark color system (#EEEDED + #262626 + opacity)
-        border: 'rgba(38, 38, 38, 0.1)',        // fg at 10%
-        input: 'rgba(38, 38, 38, 0.1)',         // fg at 10%
-        ring: 'rgba(38, 38, 38, 0.2)',          // fg at 20%
-        background: '#EEEDED',                   // Dark bg
-        foreground: '#262626',                   // Dark fg
-        
+        border: FG_10,           // fg at 10%
+        input: FG_10,            // fg at 10%
+        ring: FG_20,             // fg at 20%
+        background: BG_COLOR,    // Dark bg
+        foreground: FG_COLOR,    // Dark fg
+
         primary: {
-          DEFAULT: '#262626',                    // Dark fg
-          foreground: '#EEEDED',                 // Dark bg (contrast)
+          DEFAULT: FG_COLOR,      // Dark fg
+          foreground: BG_COLOR,   // Dark bg (contrast)
         },
-        
+
         secondary: {
-          DEFAULT: 'rgba(38, 38, 38, 0.1)',     // fg at 10%
-          foreground: '#262626',                 // Dark fg
+          DEFAULT: FG_10,         // fg at 10%
+          foreground: FG_COLOR,   // Dark fg
         },
-        
+
         destructive: {
-          DEFAULT: '#DC2626',                    // Red for destructive actions
-          foreground: '#FFFFFF',                 // White text on red
+          DEFAULT: RED,           // Red for destructive actions
+          foreground: WHITE,      // White text on red
         },
-        
+
         muted: {
-          DEFAULT: 'rgba(38, 38, 38, 0.05)',    // fg at 5%
-          foreground: 'rgba(38, 38, 38, 0.6)',  // fg at 60%
+          DEFAULT: FG_5,          // fg at 5%
+          foreground: FG_60,      // fg at 60%
         },
-        
+
         accent: {
-          DEFAULT: 'rgba(38, 38, 38, 0.1)',     // fg at 10%
-          foreground: '#262626',                 // Dark fg
+          DEFAULT: FG_10,         // fg at 10%
+          foreground: FG_COLOR,   // Dark fg
         },
-        
+
         popover: {
-          DEFAULT: '#EEEDED',                    // Dark bg
-          foreground: '#262626',                 // Dark fg
+          DEFAULT: BG_COLOR,      // Dark bg
+          foreground: FG_COLOR,   // Dark fg
         },
-        
+
         card: {
-          DEFAULT: '#EEEDED',                    // Dark bg
-          foreground: '#262626',                 // Dark fg
+          DEFAULT: BG_COLOR,      // Dark bg
+          foreground: FG_COLOR,   // Dark fg
         },
       },
       borderRadius: {
@@ -68,4 +78,3 @@ module.exports = {
   },
   plugins: [],
 };
-

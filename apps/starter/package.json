@@ -1,5 +1,5 @@
 {
-  "name": "starter",
+  "name": "@darkresearch/starter",
   "version": "0.1.0",
   "main": "./src/index.js",
   "scripts": {
@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.28.4",
-    "@darkresearch/design-system": "workspace:*",
     "@expo-google-fonts/geist": "^0.4.1",
     "@expo/metro-runtime": "~6.1.2",
     "@react-native-vector-icons/lucide": "^12.4.0",

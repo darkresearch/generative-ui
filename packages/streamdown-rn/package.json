@@ -1,5 +1,5 @@
 {
-  "name": "@darkresearch/streamdown-rn",
+  "name": "streamdown-rn",
   "version": "0.2.0",
   "description": "High-performance streaming markdown renderer for React Native with dynamic component injection",
   "main": "dist/index.js",

@@ -3,13 +3,10 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
-      "@darkresearch/design-system": [
-        "../../packages/design-system/src"
-      ],
-      "@darkresearch/galerie-rn": [
+      "galerie-rn": [
         "../../packages/galerie-rn/src"
       ],
-      "@darkresearch/streamdown-rn": [
+      "streamdown-rn": [
         "../../packages/streamdown-rn/src"
       ]
     }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, SafeAreaView } from 'react-native';
-import { StreamdownRN } from '@darkresearch/streamdown-rn';
+import { StreamdownRN } from 'streamdown-rn';
 
 const WS_URL = 'ws://localhost:3001';
 

@@ -1,6 +1,6 @@
 # Streamdown Debugger (Expo)
 
-React Native + Expo app that acts as the web control panel for `@darkresearch/streamdown-rn`.  
+React Native + Expo app that acts as the web control panel for `streamdown-rn`.  
 Runs on Expo web, sends streaming updates over WebSocket, and mirrors content to the iOS receiver app.
 
 ## Features
@@ -116,40 +116,6 @@ npm run storybook # Visual component gallery
 
 **Note**: Automated testing infrastructure will be added in a future update.
 
-## Using Design System Components
-
-```tsx
-import { FAB, Squircle } from '@darkresearch/design-system';
-import { HugeiconsIcon } from '@hugeicons/react-native';
-import { Settings01Icon } from '@hugeicons/core-free-icons';
-
-function MyScreen() {
-  return (
-    <FAB
-      icon={
-        <HugeiconsIcon
-          icon={Settings01Icon}
-          size={20}
-          color="#EEEDED"
-        />
-      }
-      onPress={() => console.log('Pressed')}
-    />
-  );
-}
-```
-
-## Adding More Components
-
-The design system uses React Native Reusables under the hood. To add new components:
-
-```bash
-cd ../design-system
-npx @react-native-reusables/cli add button card dialog
-```
-
-All components automatically use Dark branding (configured in `tailwind.config.js`).
-
 ## Project Structure
 
 ```
@@ -163,8 +129,8 @@ my-new-app/
 ## Available Packages
 
 - `@darkresearch/design-system` - UI components
-- `@darkresearch/streamdown-rn` - Streaming markdown renderer
-- `@darkresearch/galerie-rn` - Generative UI canvas
+- `streamdown-rn` - Streaming markdown renderer
+- `galerie-rn` - Generative UI canvas
 
 ## Learn More
 

@@ -1,50 +1,33 @@
 # streamdown-rn
 
+## 0.2.0
+
+### Breaking Changes
+
+- **Component syntax changed**: `[{c:"Name",p:{...}}]` replaces the old `{{component:"Name",props:{...}}}` syntax
+- **Layout components removed**: Canvas, Grid, Stack, Card are no longer exported (planned for future galerie-rn package)
+- **Simplified public API**: Only exports StreamdownRN, Skeleton primitives, and types
+
+### New Features
+
+- **Progressive prop streaming**: Components render field-by-field as data streams, with skeleton placeholders for missing props
+- **Format-as-you-type UX**: Bold, italic, code formatting appears immediately while typing
+- **Block-level memoization**: Stable blocks are parsed once and never re-render
+- **Full GFM support**: Tables, strikethrough, task lists, autolinks via remark-gfm
+
+### Improvements
+
+- **Compact component syntax**: `[{c:...,p:...}]` reduces token count by ~50%
+- **Robust JSON parsing**: Auto-repairs incomplete JSON during streaming
+- **Better streaming edge cases**: Handles incomplete markdown gracefully
+
+---
+
 ## 0.1.6
 
 ### Patch Changes
 
 - Enhanced fuzz testing, fixed component injection bugs, and improved CI configuration.
-
-## 0.1.6 (Unreleased)
-
-### Major Changes
-
-- **Progressive field rendering**: Components now render field-by-field as data streams in, dramatically improving perceived performance (75%+ faster time-to-first-render)
-- **New compact syntax**: Changed from `{{component: "Name", props: {...}}}` to `{{c:"Name",p:{...}}}` for ~50% character reduction
-- **Declarative Progressive framework**: New `<Progressive>` and `<Progressive.Field>` components for building components with field-level skeleton states
-- **Intelligent JSON parsing**: Auto-completes incomplete JSON during streaming (handles trailing commas, incomplete field names, partial numbers, etc.)
-- **Field-level skeletons**: `<FieldSkeleton>` component for granular loading states
-
-### New Features
-
-- Added `ComponentRenderingMetadata` interface with `fieldOrder` for progressive rendering
-- Added `extractPartialComponents()` function to extract components with incomplete props
-- Added `getLastJSONCleanup()` function for debugging JSON completion logic
-- Added `onComponentExtractionUpdate` callback for real-time component extraction state
-- Added skeleton colors to theme config: `skeletonBase`, `skeletonHighlight`
-- Enhanced dev platform debug panel with component extraction visualization and JSON cleanup steps
-- Added component library viewer to dev platform to browse component source code
-
-### Breaking Changes
-
-- **Component syntax change**: Old syntax `{{component: "Name", props: {...}}}` is no longer supported. Use `{{c:"Name",p:{...}}}` instead
-- **Prop names**: Components should use short prop names (e.g., `sym` not `tokenSymbol`) for better streaming performance
-- **ComponentDefinition**: Added optional `renderingMetadata` field
-- **ThemeConfig**: Added required `skeletonBase` and `skeletonHighlight` color fields
-
-### Performance Improvements
-
-- Progressive rendering reduces perceived latency by 75%+ (first visual feedback in ~160ms vs ~650ms)
-- Compact syntax reduces token count by ~50%, improving LLM generation speed
-- Position offset tracking in partial component extraction prevents regex backtracking issues
-
-### Developer Experience
-
-- Enhanced debug panel with full-text scrollable views
-- Component library modal for viewing component source code
-- JSON cleanup visualization with step-by-step transformation details
-- Better console logging for debugging component extraction
 
 ## 0.1.5
 

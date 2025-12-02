@@ -4,11 +4,9 @@ import {
   Skeleton,
   SkeletonText,
   SkeletonNumber,
-  Canvas,
-  CanvasSkeleton,
   type ComponentDefinition,
   type ComponentRegistry,
-} from '@darkresearch/streamdown-rn';
+} from 'streamdown-rn';
 
 // ============================================================================
 // Shared Styles
@@ -213,40 +211,8 @@ const definitions: Record<string, ComponentDefinition> = {
       required: ['title'],
     },
   },
-  Stack: {
-    component: Stack,
-    skeletonComponent: StackSkeleton,
-    schema: {
-      type: 'object',
-      properties: {
-        direction: { type: 'string' },
-        gap: { type: 'number' },
-        align: { type: 'string' },
-        justify: { type: 'string' },
-      },
-    },
-  },
-  Card: {
-    component: Card,
-    skeletonComponent: CardSkeleton,
-    schema: {
-      type: 'object',
-      properties: {
-        title: { type: 'string' },
-        padding: { type: 'number' },
-      },
-    },
-  },
-  Canvas: {
-    component: Canvas,
-    skeletonComponent: CanvasSkeleton,
-    schema: {
-      type: 'object',
-      properties: {
-        style: { type: 'object' },
-      },
-    },
-  },
+  // NOTE: Stack, Card, Canvas removed from registry for release
+  // Local definitions kept below for future nested component work
 };
 
 export const debugComponentRegistry: ComponentRegistry = {

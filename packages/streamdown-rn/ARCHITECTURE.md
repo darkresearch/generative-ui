@@ -3,12 +3,12 @@
 ## Overview
 
 High-performance streaming markdown renderer for React Native with:
-- ✅ **Format-as-you-type UX** — Formatting appears immediately
-- ✅ **AST-based rendering** — Robust via remark + remark-gfm
-- ✅ **Block-level memoization** — Stable blocks never re-render
-- ✅ **Inline component support** — `[{c:"Name",p:{...}}]` syntax
-- ✅ **Full GFM support** — Tables, strikethrough, task lists, footnotes
-- ✅ **Syntax highlighting** — Prism-based, lightweight (~30KB)
+- **Format-as-you-type UX** — Formatting appears immediately
+- **AST-based rendering** — Robust via remark + remark-gfm
+- **Block-level memoization** — Stable blocks never re-render
+- **Inline component support** — `[{c:"Name",p:{...}}]` syntax
+- **Full GFM support** — Tables, strikethrough, task lists, footnotes
+- **Syntax highlighting** — Prism-based, lightweight (~30KB)
 
 ---
 
@@ -43,50 +43,47 @@ Incoming stream: "# Hello\n\nSome **bold** text"
 
 ---
 
-## File Structure (27 files, ~3,655 lines)
+## File Structure
 
 ```
 src/
-├── __tests__/                        # Unit tests (34 tests, all passing)
+├── __tests__/                        # Unit tests (151 tests)
 │   ├── splitter.test.ts              # Block boundary detection
 │   ├── incomplete.test.ts            # Tag state tracking
 │   ├── parser.test.ts                # Remark/GFM parsing
 │   ├── component-extraction.test.ts  # Component syntax
 │   └── README.md                     # Test documentation
 │
-├── core/                             # Core engine (~1,200 lines)
-│   ├── types.ts                      # Type definitions + utilities
-│   ├── splitter.ts                   # Block boundary detection
+├── components/                       # Reusable components
+│   ├── index.ts                      # Exports
+│   └── Skeleton.tsx                  # Skeleton primitives
+│
+├── core/                             # Core engine
+│   ├── types.ts                      # Type definitions
+│   ├── splitter/                     # Block boundary detection
+│   │   ├── index.ts                  # Main splitter
+│   │   ├── blockPatterns.ts          # Block type detection
+│   │   ├── blockClosers.ts           # Boundary detection
+│   │   ├── finalizeBlock.ts          # Block completion
+│   │   ├── processLines.ts           # Line processing
+│   │   └── logger.ts                 # Debug logging
 │   ├── parser.ts                     # Remark wrapper (cached)
-│   └── incomplete.ts                 # Tag state + auto-close logic
+│   ├── incomplete.ts                 # Tag state + auto-close
+│   └── componentParser.ts            # Component extraction
 │
-├── blocks/                           # Block components (~1,200 lines)
-│   ├── CodeBlock.tsx                 # Code with syntax highlighting
-│   ├── Heading.tsx                   # H1-H6
-│   ├── Paragraph.tsx                 # Text paragraphs
-│   ├── List.tsx                      # Ordered/unordered lists
-│   ├── Blockquote.tsx                # Quotes
-│   ├── Component.tsx                 # Inline/block components
-│   ├── HorizontalRule.tsx            # ---
-│   ├── Image.tsx                     # Images
-│   ├── Table.tsx                     # GFM tables
-│   ├── syntax-utils.ts               # Prism helpers
-│   └── index.ts                      # Exports
-│
-├── renderers/                        # Rendering layer (~600 lines)
+├── renderers/                        # Rendering layer
 │   ├── ActiveBlock.tsx               # Streaming block renderer
 │   ├── StableBlock.tsx               # Memoized block renderer
-│   ├── ASTRenderer.tsx               # MDAST → React components
-│   └── InlineRenderer.tsx            # Legacy (kept for compat)
+│   └── ASTRenderer.tsx               # MDAST → React components
 │
-├── themes/                           # Theming (~260 lines)
-│   └── index.ts                      # Dark/light themes + styles
+├── themes/                           # Theming
+│   └── index.ts                      # Dark/light themes
 │
 ├── types/                            # Type declarations
 │   └── react-native-syntax-highlighter.d.ts
 │
-├── StreamdownRN.tsx                  # Main component (~120 lines)
-└── index.ts                          # Public API (~115 lines)
+├── StreamdownRN.tsx                  # Main component
+└── index.ts                          # Public API
 ```
 
 ---
@@ -140,11 +137,11 @@ Both are detected and rendered correctly.
 ### 4. Full GitHub Flavored Markdown
 
 Via `remark-gfm`:
-- ✅ Tables with alignment
-- ✅ Strikethrough (`~~deleted~~`)
-- ✅ Task lists (`- [x] done`)
-- ✅ Autolinks (`www.example.com`)
-- ✅ Footnotes (`[^1]`)
+- Tables with alignment
+- Strikethrough (`~~deleted~~`)
+- Task lists (`- [x] done`)
+- Autolinks (`www.example.com`)
+- Footnotes (`[^1]`)
 
 ---
 
@@ -174,34 +171,14 @@ Via `remark-gfm`:
 
 ```bash
 bun test
-# ✓ 34 tests passing
-# - Block splitter (9 tests)
-# - Incomplete handler (12 tests)
-# - Parser (9 tests)
-# - Component extraction (4 tests)
+# ✓ 151 tests passing
 ```
 
 **Test Coverage:**
-- Heading detection (H1-H6)
-- Code block streaming (opening, content, closing)
-- Component syntax (`[{...}]`)
-- Tag state tracking
-- Auto-close logic
-- AST generation
-- GFM features
-
-### Exported for Testing
-
-```typescript
-// Core functions (testable without React)
-export {
-  processNewContent,      // Block splitter
-  updateTagState,         // Tag tracking
-  fixIncompleteMarkdown,  // Auto-close logic
-  parseBlockContent,      // Remark parser
-  extractComponentData,   // Component extraction
-};
-```
+- Block splitter (boundary detection, edge cases)
+- Incomplete handler (tag state tracking, auto-close)
+- Parser (remark/GFM parsing)
+- Component extraction (syntax parsing, streaming)
 
 ---
 
@@ -223,15 +200,6 @@ Check out this [{c:"Badge",p:{"label":"New"}}] feature!
 
 ---
 
-## Next Steps
-
-1. **Integration testing** — Add to starter app
-2. **Performance benchmarking** — Measure real streaming scenarios
-3. **Visual testing** — Storybook stories for all blocks
-4. **Edge case handling** — Expand test coverage
-
----
-
 ## Dependencies
 
 | Package | Size | Purpose |
@@ -242,4 +210,3 @@ Check out this [{c:"Badge",p:{"label":"New"}}] feature!
 | `react-native-syntax-highlighter` | ~5KB | RN wrapper for Prism |
 
 **Total bundle impact:** ~100KB (well worth it for robustness)
-

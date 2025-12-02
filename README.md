@@ -4,60 +4,51 @@ React Native components and tools for building generative UI applications.
 
 ## Packages
 
-### Core Libraries
-- **[@darkresearch/streamdown-rn](./packages/streamdown-rn)** - Streaming markdown parser/renderer with dynamic component injection of Progressive React Native Components
-- **[@darkresearch/galerie-rn](./packages/galerie-rn)** - Generative UI canvas management  
-- **[@darkresearch/design-system](./packages/design-system)** - UI component library
+### [streamdown-rn](./packages/streamdown-rn)
 
-### Apps
-- **[apps/starter](./apps/starter)** - Starter template app
+High-performance streaming markdown renderer with dynamic component injection.
 
-## Design System
+- Streaming-first rendering
+- Format-as-you-type UX
+- Progressive component streaming with skeletons
+- Full GFM support (tables, strikethrough, task lists)
 
-Our design system uses a simplified color palette:
-- **Background**: `#EEEDED` (light gray)
-- **Foreground**: `#262626` (dark gray)
-- **Everything else**: Opacity variants (10%, 40%, 60%)
+### [galerie-rn](./packages/galerie-rn) (Experimental)
 
-### Key Features
-- 🎨 **Squircle shapes** - Modern iOS-style rounded corners (cornerSmoothing: 0.6)
-- 🎯 **Native performance** - Uses react-native-fast-squircle
-- 🎭 **React Native Reusables** - Pre-configured with Dark branding
-- 🎨 **NativeWind** - Tailwind CSS for styling
+Generative UI canvas management. Currently a stub for future development.
 
-## Quick Start (New App)
+## Apps
 
-### Using the Template
+- **[apps/debugger](./apps/debugger)** — Streamdown debugger with streaming controls
+- **[apps/starter](./apps/starter)** — Starter template app
 
-The `apps/starter/` shows the minimal setup. To start a new app:
+## Quick Start
+
+### Using Streamdown
 
 ```bash
-# Copy the template (must be outside monorepo)
-cp -r apps/starter ../my-new-app
-cd ../my-new-app
+bun install streamdown-rn
+```
 
-# Update package.json to use published packages
-# (For now, use file:../generative-ui/packages/design-system)
+```tsx
+import { StreamdownRN } from 'streamdown-rn';
 
-# Install & run
+function ChatMessage({ content }: { content: string }) {
+  return (
+    <StreamdownRN theme="dark">
+      {content}
+    </StreamdownRN>
+  );
+}
+```
+
+### Running the Debugger
+
+```bash
+cd apps/debugger
 bun install
-npx expo prebuild
-npx expo run:ios
+bun run web
 ```
-
-### Running the Template App
-
-```bash
-cd apps/starter
-bun run ios    # iOS
-bun run web    # Web
-```
-
-Your apps will have:
-- ✅ Design system components
-- ✅ Squircle aesthetic  
-- ✅ Dark branding
-- ✅ Generative UI ready (galerie + streamdown available)
 
 ## Development
 
@@ -66,60 +57,39 @@ Your apps will have:
 bun install
 ```
 
-### Build All Packages
+### Build Packages
 ```bash
+cd packages/streamdown-rn
 bun run build
 ```
 
-### Run Template App
+### Run Tests
 ```bash
-cd apps/starter
-bun run ios    # iOS
-bun run web    # Web
+cd packages/streamdown-rn
+bun test
 ```
-
-## AI-Assisted Development
-
-This monorepo is optimized for AI-assisted development. See:
-- **[AGENTS.md](./AGENTS.md)** - AI development workflow (all AI tools)
-- **[.cursor/rules/](./.cursor/rules/)** - Cursor-specific guidelines
-
-When AI creates components, it automatically generates:
-- Component implementation (.tsx)
-- Tests (.test.tsx)  
-- Storybook stories (.stories.tsx)
 
 ## Architecture
 
 ```
 generative-ui/
 ├── apps/                   # Expo applications
+│   ├── debugger/           # Streamdown debugger
+│   ├── debugger-ios/       # iOS-only debugger
 │   └── starter/            # Starter template
 ├── packages/               # Publishable packages
-│   ├── streamdown-rn/      # Parse/render streaming markdown
-│   ├── galerie-rn/         # Generative UI canvas (uses streamdown)
-│   └── design-system/      # UI components for apps
-├── dev-archive/            # Archived dev playground (for reference)
+│   ├── streamdown-rn/      # Streaming markdown renderer
+│   └── galerie-rn/         # Canvas management (experimental)
 ├── .cursor/rules/          # AI coding rules
-├── AGENTS.md               # AI workflow docs
-├── tailwind.config.js      # Design system colors
-└── global.css              # Tailwind directives
+└── AGENTS.md               # AI workflow docs
 ```
 
-**How they work together**:
-- Apps import `@darkresearch/design-system` for UI
-- Apps import `@darkresearch/galerie-rn` for generative canvas
-- Galerie uses `@darkresearch/streamdown-rn` for parsing
-- All share the same design language
+## AI-Assisted Development
 
-## Contributing
+This monorepo is optimized for AI-assisted development. See:
+- **[AGENTS.md](./AGENTS.md)** — AI development workflow
+- **[.cursor/rules/](./.cursor/rules/)** — Cursor-specific guidelines
 
-This repo uses AI-first development workflows. Follow the guidelines in:
-- `.cursor/rules/design-system.mdc` - Component creation
-- `.cursor/rules/testing.mdc` - Test requirements  
-- `.cursor/rules/performance.mdc` - Performance budgets
-- `.cursor/rules/react-native.mdc` - Platform best practices
-
-----
+---
 
 Built with ❤️ by [Dark](https://darkresearch.ai)

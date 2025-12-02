@@ -9,7 +9,7 @@ import {
   Pressable,
   Platform,
 } from 'react-native';
-import { StreamdownRN, type DebugSnapshot } from '@darkresearch/streamdown-rn';
+import { StreamdownRN, type DebugSnapshot } from 'streamdown-rn';
 import { PRESETS } from './presets';
 import { debugComponentRegistry } from './debugComponents';
 

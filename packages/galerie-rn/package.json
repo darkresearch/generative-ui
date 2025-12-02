@@ -1,7 +1,7 @@
 {
   "name": "galerie-rn",
   "version": "0.0.2",
-  "description": "React Native spatial canvas library for LLM-generated UIs",
+  "description": "React Native spatial canvas library for LLM-generated UIs (experimental)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "author": "Dark Research",
@@ -10,9 +10,8 @@
     "access": "public"
   },
   "peerDependencies": {
-    "react": "*",
-    "react-native": "*",
-    "streamdown-rn": "workspace:*"
+    "react": "^19.0.0",
+    "react-native": "^0.81.0"
   },
   "devDependencies": {
     "@types/react": "~19.0.0",
