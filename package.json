@@ -6,6 +6,7 @@
     "packages/*"
   ],
   "scripts": {
+    "test": "bun run --filter 'streamdown-rn' test",
     "build": "bun run --filter '*' build",
     "type-check": "bun run --filter '*' type-check",
     "changeset": "changeset",

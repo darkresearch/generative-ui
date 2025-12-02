@@ -1,6 +1,6 @@
 {
   "name": "streamdown-rn",
-  "version": "0.2.0",
+  "version": "0.1.6",
   "description": "High-performance streaming markdown renderer for React Native with dynamic component injection",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
