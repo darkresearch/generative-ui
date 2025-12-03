@@ -521,6 +521,15 @@ function hideIncompleteMarkers(text: string): string {
   // === Hide empty inline formatting ===
   // Order matters: check longer patterns first!
   
+  // Zero-width space (\u200B) is used to break up patterns when closing empty tags.
+  // We need to hide these patterns too.
+  
+  // Empty bold+italic with zero-width space: "***\u200B***" at end
+  result = result.replace(/(^|[\s\n])\*\*\*\u200B\*\*\*$/g, '$1');
+  
+  // Empty italic with zero-width space: "*\u200B*" at end
+  result = result.replace(/(^|[\s\n])\*\u200B\*$/g, '$1');
+  
   // Empty bold+italic: "******" at end preceded by whitespace/start (***...*** with no content)
   result = result.replace(/(^|[\s\n])\*\*\*\*\*\*$/g, '$1');
   
