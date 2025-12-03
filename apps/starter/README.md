@@ -38,7 +38,7 @@ bun run web
 
 The setup script will prompt you for:
 - App name
-- Package name  
+- Package name
 - Bundle IDs (iOS/Android)
 
 See [FORKING.md](./FORKING.md) for detailed instructions.
