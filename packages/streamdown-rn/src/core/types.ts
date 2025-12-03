@@ -217,13 +217,16 @@ export interface ThemeColors {
 
 /**
  * Theme configuration
+ * 
+ * Font-agnostic: regular and bold fonts are optional (undefined uses platform defaults).
+ * Only mono is required for code blocks.
  */
 export interface ThemeConfig {
   colors: ThemeColors;
   fonts: {
-    regular: string;
-    bold: string;
-    mono: string;
+    regular?: string;   // Optional - uses platform default if undefined
+    bold?: string;      // Optional - uses platform default if undefined
+    mono: string;       // Required for code blocks
   };
   spacing: {
     block: number;      // Space between blocks

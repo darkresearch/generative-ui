@@ -3,6 +3,9 @@
  * 
  * Dark and light themes with consistent styling.
  * Optimized for readability and streaming performance.
+ * 
+ * Font-agnostic: Uses platform defaults for text, allowing host apps
+ * to set their own fonts. Only monospace is specified for code blocks.
  */
 
 import { Platform } from 'react-native';
@@ -56,17 +59,12 @@ const lightColors: ThemeColors = {
 // Font Configuration
 // ============================================================================
 
+// Font-agnostic: undefined lets React Native use platform defaults
+// This allows host apps to set fonts at the root level and have them inherited
+// Only monospace is specified for code blocks
 const fonts = {
-  regular: Platform.select({
-    ios: 'System',
-    android: 'System',
-    default: 'System',
-  }) as string,
-  bold: Platform.select({
-    ios: 'System',
-    android: 'System',
-    default: 'System',
-  }) as string,
+  regular: undefined as string | undefined,
+  bold: undefined as string | undefined,
   mono: Platform.select({
     ios: 'Menlo',
     android: 'monospace',
@@ -114,18 +112,25 @@ export function getTheme(theme: 'dark' | 'light' | ThemeConfig): ThemeConfig {
 
 /**
  * Generate text styles for a theme
+ * 
+ * Font-agnostic: Only applies fontFamily when explicitly set in theme.
+ * This allows host apps to set fonts at the root level and have them inherited.
  */
 export function getTextStyles(theme: ThemeConfig) {
+  // Helper to conditionally include fontFamily
+  const withFont = (fontKey: 'regular' | 'bold' | 'mono') => 
+    theme.fonts[fontKey] ? { fontFamily: theme.fonts[fontKey] } : {};
+
   return {
     body: {
       color: theme.colors.foreground,
-      fontFamily: theme.fonts.regular,
+      ...withFont('regular'),
       fontSize: 16,
       lineHeight: 24,
     },
     heading1: {
       color: theme.colors.foreground,
-      fontFamily: theme.fonts.bold,
+      ...withFont('bold'),
       fontSize: 28,
       lineHeight: 36,
       fontWeight: 'bold' as const,
@@ -133,7 +138,7 @@ export function getTextStyles(theme: ThemeConfig) {
     },
     heading2: {
       color: theme.colors.foreground,
-      fontFamily: theme.fonts.bold,
+      ...withFont('bold'),
       fontSize: 24,
       lineHeight: 32,
       fontWeight: 'bold' as const,
@@ -141,7 +146,7 @@ export function getTextStyles(theme: ThemeConfig) {
     },
     heading3: {
       color: theme.colors.foreground,
-      fontFamily: theme.fonts.bold,
+      ...withFont('bold'),
       fontSize: 20,
       lineHeight: 28,
       fontWeight: 'bold' as const,
@@ -149,7 +154,7 @@ export function getTextStyles(theme: ThemeConfig) {
     },
     heading4: {
       color: theme.colors.foreground,
-      fontFamily: theme.fonts.bold,
+      ...withFont('bold'),
       fontSize: 18,
       lineHeight: 26,
       fontWeight: 'bold' as const,
@@ -157,7 +162,7 @@ export function getTextStyles(theme: ThemeConfig) {
     },
     heading5: {
       color: theme.colors.foreground,
-      fontFamily: theme.fonts.bold,
+      ...withFont('bold'),
       fontSize: 16,
       lineHeight: 24,
       fontWeight: 'bold' as const,
@@ -165,7 +170,7 @@ export function getTextStyles(theme: ThemeConfig) {
     },
     heading6: {
       color: theme.colors.foreground,
-      fontFamily: theme.fonts.bold,
+      ...withFont('bold'),
       fontSize: 14,
       lineHeight: 22,
       fontWeight: 'bold' as const,
@@ -173,20 +178,21 @@ export function getTextStyles(theme: ThemeConfig) {
     },
     paragraph: {
       color: theme.colors.foreground,
-      fontFamily: theme.fonts.regular,
+      ...withFont('regular'),
       fontSize: 16,
       lineHeight: 24,
       marginBottom: theme.spacing.block,
     },
     bold: {
-      fontFamily: theme.fonts.bold,
+      ...withFont('bold'),
       fontWeight: 'bold' as const,
     },
     italic: {
       fontStyle: 'italic' as const,
+      // No fontFamily - inherits from parent, allowing platform italic to work
     },
     code: {
-      fontFamily: theme.fonts.mono,
+      ...withFont('mono'),
       fontSize: 14,
       color: theme.colors.codeForeground,
       backgroundColor: theme.colors.codeBackground,
