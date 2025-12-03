@@ -2,35 +2,13 @@
   "expo": {
     "name": "Streamdown Debugger",
     "slug": "streamdown-debugger",
-    "scheme": "streamdown-debugger",
     "version": "0.1.0",
-    "orientation": "portrait",
-    "userInterfaceStyle": "light",
-    "icon": "./assets/app-icon.png",
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.darkresearch.debugger",
-      "icon": "./assets/app-icon.png"
-    },
-    "android": {
-      "package": "com.darkresearch.debugger",
-      "icon": "./assets/app-icon.png"
-    },
     "web": {
       "bundler": "metro"
     },
     "plugins": [
       "expo-asset",
       "expo-font"
-    ],
-    "experiments": {
-      "autolinkingModuleResolution": true
-    },
-    "extra": {
-      "eas": {
-        "projectId": "073f23f7-77a4-4f2f-ab27-e0d1dc4bafb2"
-      }
-    },
-    "owner": "dark-research"
+    ]
   }
 }

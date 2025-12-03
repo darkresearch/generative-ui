@@ -9,11 +9,11 @@
     "icon": "./assets/app-icon.png",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.darkresearch.debugger-ios",
+      "bundleIdentifier": "com.darkresearch.debugger_ios",
       "icon": "./assets/app-icon.png"
     },
     "android": {
-      "package": "com.darkresearch.debugger-ios",
+      "package": "com.darkresearch.debugger_ios",
       "icon": "./assets/app-icon.png"
     },
     "web": {

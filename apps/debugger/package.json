@@ -4,8 +4,6 @@
   "main": "./src/index.js",
   "scripts": {
     "start": "bunx expo start",
-    "android": "bunx expo run:android",
-    "ios": "bunx expo run:ios",
     "web": "bunx expo start --web",
     "lint": "eslint .",
     "setup": "node setup.js",
