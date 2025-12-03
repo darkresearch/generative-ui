@@ -4,7 +4,6 @@
   "main": "./src/index.js",
   "scripts": {
     "start": "bunx expo start --port 8082 --host lan",
-    "android": "RCT_METRO_PORT=8082 bunx expo run:android",
     "ios": "RCT_METRO_PORT=8082 bunx expo run:ios",
     "web": "bunx expo start --web --port 8082",
     "dev": "RCT_METRO_PORT=8082 bunx concurrently --kill-others \"bun run start\" \"sleep 5 && echo '🔧 Metro port: 8082 (RCT_METRO_PORT)' && bun run ios\"",

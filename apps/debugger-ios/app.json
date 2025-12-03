@@ -12,10 +12,6 @@
       "bundleIdentifier": "com.darkresearch.debuggerios",
       "icon": "./assets/app-icon.png"
     },
-    "android": {
-      "package": "com.darkresearch.debuggerios",
-      "icon": "./assets/app-icon.png"
-    },
     "web": {
       "bundler": "metro"
     },
