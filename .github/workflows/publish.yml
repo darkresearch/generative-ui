@@ -50,4 +50,12 @@ jobs:
       - name: Publish to npm with provenance
         if: steps.changesets.outputs.hasChangesets == 'false'
         working-directory: packages/streamdown-rn
-        run: npm publish --provenance --access public
+        run: |
+          # Clear any existing npmrc that might interfere
+          rm -f ~/.npmrc
+          # Configure npm registry
+          npm config set registry https://registry.npmjs.org/
+          # Check npm version (need 9.5.0+ for OIDC)
+          npm --version
+          # Publish with provenance (triggers OIDC auth)
+          npm publish --provenance --access public
