@@ -62,7 +62,8 @@ class ReactNativeDelegate: ExpoReactNativeFactoryDelegate {
 
   override func bundleURL() -> URL? {
 #if DEBUG
-    return RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: ".expo/.virtual-metro-entry")
+    // Use port 8082 to avoid conflicts with other apps in the monorepo
+    return URL(string: "http://localhost:8082/.expo/.virtual-metro-entry.bundle?platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true")
 #else
     return Bundle.main.url(forResource: "main", withExtension: "jsbundle")
 #endif

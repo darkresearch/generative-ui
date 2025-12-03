@@ -9,24 +9,24 @@
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		79111C3760363D78B218E489 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = D77253BBFA40891627421726 /* ExpoModulesProvider.swift */; };
-		8CC15A58C95D7F9800AFB0B6 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = C4B54769F728E86D5D14DA37 /* PrivacyInfo.xcprivacy */; };
+		4468E715D51A25052957FB0C /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FD7775B04375AFED6200A0C /* ExpoModulesProvider.swift */; };
+		5A18274D06FE855097848912 /* libPods-DebuggeriOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8EB8342D0F567BB41F4F3EA7 /* libPods-DebuggeriOS.a */; };
+		5B5B217E2F6FD79D55570C1A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 931E7435239D00416B700D65 /* PrivacyInfo.xcprivacy */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
-		FB9E86AB4DDBBE07B722353E /* libPods-DebuggeriOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B85B53F82C2BEB172887661E /* libPods-DebuggeriOS.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		116CE760B0B51735AD314F5F /* Pods-DebuggeriOS.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DebuggeriOS.release.xcconfig"; path = "Target Support Files/Pods-DebuggeriOS/Pods-DebuggeriOS.release.xcconfig"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* DebuggeriOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DebuggeriOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = DebuggeriOS/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = DebuggeriOS/Info.plist; sourceTree = "<group>"; };
+		2B5E72511385269653F0EC0E /* Pods-DebuggeriOS.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DebuggeriOS.release.xcconfig"; path = "Target Support Files/Pods-DebuggeriOS/Pods-DebuggeriOS.release.xcconfig"; sourceTree = "<group>"; };
+		4FD7775B04375AFED6200A0C /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-DebuggeriOS/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		8EB8342D0F567BB41F4F3EA7 /* libPods-DebuggeriOS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-DebuggeriOS.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		931E7435239D00416B700D65 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = DebuggeriOS/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = DebuggeriOS/SplashScreen.storyboard; sourceTree = "<group>"; };
-		B85B53F82C2BEB172887661E /* libPods-DebuggeriOS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-DebuggeriOS.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		C4B54769F728E86D5D14DA37 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = DebuggeriOS/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		D77253BBFA40891627421726 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-DebuggeriOS/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		EBFDD2AA8DB4E63D69648E57 /* Pods-DebuggeriOS.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DebuggeriOS.debug.xcconfig"; path = "Target Support Files/Pods-DebuggeriOS/Pods-DebuggeriOS.debug.xcconfig"; sourceTree = "<group>"; };
+		BFBB964F7F5F899E80EA2562 /* Pods-DebuggeriOS.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DebuggeriOS.debug.xcconfig"; path = "Target Support Files/Pods-DebuggeriOS/Pods-DebuggeriOS.debug.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = DebuggeriOS/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* DebuggeriOS-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "DebuggeriOS-Bridging-Header.h"; path = "DebuggeriOS/DebuggeriOS-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -37,7 +37,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FB9E86AB4DDBBE07B722353E /* libPods-DebuggeriOS.a in Frameworks */,
+				5A18274D06FE855097848912 /* libPods-DebuggeriOS.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -53,28 +53,44 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				C4B54769F728E86D5D14DA37 /* PrivacyInfo.xcprivacy */,
+				931E7435239D00416B700D65 /* PrivacyInfo.xcprivacy */,
 			);
 			name = DebuggeriOS;
-			sourceTree = "<group>";
-		};
-		15D9723D74AB2664CA51FDFE /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				EBFDD2AA8DB4E63D69648E57 /* Pods-DebuggeriOS.debug.xcconfig */,
-				116CE760B0B51735AD314F5F /* Pods-DebuggeriOS.release.xcconfig */,
-			);
-			name = Pods;
-			path = Pods;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				B85B53F82C2BEB172887661E /* libPods-DebuggeriOS.a */,
+				8EB8342D0F567BB41F4F3EA7 /* libPods-DebuggeriOS.a */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		38C2486C636AA960C977BC54 /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				51B7CA793F64F661BCA275D0 /* DebuggeriOS */,
+			);
+			name = ExpoModulesProviders;
+			sourceTree = "<group>";
+		};
+		512487EBC00B40E6A3FDBB48 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				BFBB964F7F5F899E80EA2562 /* Pods-DebuggeriOS.debug.xcconfig */,
+				2B5E72511385269653F0EC0E /* Pods-DebuggeriOS.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
+			sourceTree = "<group>";
+		};
+		51B7CA793F64F661BCA275D0 /* DebuggeriOS */ = {
+			isa = PBXGroup;
+			children = (
+				4FD7775B04375AFED6200A0C /* ExpoModulesProvider.swift */,
+			);
+			name = DebuggeriOS;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -91,8 +107,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				15D9723D74AB2664CA51FDFE /* Pods */,
-				A38868AE56B2BE68886CA19D /* ExpoModulesProviders */,
+				512487EBC00B40E6A3FDBB48 /* Pods */,
+				38C2486C636AA960C977BC54 /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -105,22 +121,6 @@
 				13B07F961A680F5B00A75B9A /* DebuggeriOS.app */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		92A5140450EABE2ABBE8218D /* DebuggeriOS */ = {
-			isa = PBXGroup;
-			children = (
-				D77253BBFA40891627421726 /* ExpoModulesProvider.swift */,
-			);
-			name = DebuggeriOS;
-			sourceTree = "<group>";
-		};
-		A38868AE56B2BE68886CA19D /* ExpoModulesProviders */ = {
-			isa = PBXGroup;
-			children = (
-				92A5140450EABE2ABBE8218D /* DebuggeriOS */,
-			);
-			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
@@ -140,13 +140,13 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "DebuggeriOS" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				7B8AD84C2AB0A805DD585A07 /* [Expo] Configure project */,
+				8D261D8EF8E225E116F2A279 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				5BA0EF47AD916F935B484496 /* [CP] Embed Pods Frameworks */,
+				2AFEE0744C7F9B4E245DB673 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -196,7 +196,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				8CC15A58C95D7F9800AFB0B6 /* PrivacyInfo.xcprivacy in Resources */,
+				5B5B217E2F6FD79D55570C1A /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -242,7 +242,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		5BA0EF47AD916F935B484496 /* [CP] Embed Pods Frameworks */ = {
+		2AFEE0744C7F9B4E245DB673 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -263,30 +263,6 @@
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-DebuggeriOS/Pods-DebuggeriOS-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
-		};
-		7B8AD84C2AB0A805DD585A07 /* [Expo] Configure project */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"$(SRCROOT)/.xcode.env",
-				"$(SRCROOT)/.xcode.env.local",
-				"$(SRCROOT)/DebuggeriOS/DebuggeriOS.entitlements",
-				"$(SRCROOT)/Pods/Target Support Files/Pods-DebuggeriOS/expo-configure-project.sh",
-			);
-			name = "[Expo] Configure project";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(SRCROOT)/Pods/Target Support Files/Pods-DebuggeriOS/ExpoModulesProvider.swift",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-DebuggeriOS/expo-configure-project.sh\"\n";
 		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -318,6 +294,30 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-DebuggeriOS/Pods-DebuggeriOS-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
+		8D261D8EF8E225E116F2A279 /* [Expo] Configure project */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/.xcode.env",
+				"$(SRCROOT)/.xcode.env.local",
+				"$(SRCROOT)/DebuggeriOS/DebuggeriOS.entitlements",
+				"$(SRCROOT)/Pods/Target Support Files/Pods-DebuggeriOS/expo-configure-project.sh",
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/Pods/Target Support Files/Pods-DebuggeriOS/ExpoModulesProvider.swift",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-DebuggeriOS/expo-configure-project.sh\"\n";
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -326,7 +326,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				79111C3760363D78B218E489 /* ExpoModulesProvider.swift in Sources */,
+				4468E715D51A25052957FB0C /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -335,7 +335,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = EBFDD2AA8DB4E63D69648E57 /* Pods-DebuggeriOS.debug.xcconfig */;
+			baseConfigurationReference = BFBB964F7F5F899E80EA2562 /* Pods-DebuggeriOS.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -371,7 +371,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 116CE760B0B51735AD314F5F /* Pods-DebuggeriOS.release.xcconfig */;
+			baseConfigurationReference = 2B5E72511385269653F0EC0E /* Pods-DebuggeriOS.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;

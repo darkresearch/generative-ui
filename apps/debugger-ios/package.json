@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "main": "./src/index.js",
   "scripts": {
-    "start": "bunx expo start --port 8082 --host 0.0.0.0",
-    "android": "bunx expo run:android --port 8082",
-    "ios": "REACT_NATIVE_PACKAGER_HOSTNAME=0.0.0.0 bunx expo run:ios --port 8082",
+    "start": "bunx expo start --port 8082 --host lan",
+    "android": "RCT_METRO_PORT=8082 bunx expo run:android",
+    "ios": "RCT_METRO_PORT=8082 bunx expo run:ios",
     "web": "bunx expo start --web --port 8082",
+    "dev": "RCT_METRO_PORT=8082 bunx concurrently --kill-others \"bun run start\" \"sleep 5 && echo '🔧 Metro port: 8082 (RCT_METRO_PORT)' && bun run ios\"",
     "lint": "eslint .",
     "setup": "node setup.js"
   },
@@ -37,6 +38,7 @@
     "@types/react": "~19.2.7",
     "babel-plugin-module-resolver": "^5.0.2",
     "babel-preset-expo": "~54.0.7",
+    "concurrently": "^9.1.2",
     "typescript": "~5.9.3"
   },
   "private": true
