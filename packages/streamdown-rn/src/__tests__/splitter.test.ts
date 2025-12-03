@@ -125,6 +125,62 @@ describe('Block Splitter', () => {
         props: { title: 'Hello' },
       });
     });
+
+    it('should correctly split component and following text when streamed in large chunks', () => {
+      // This tests the character-level processing fix
+      // The bug was: when "}}]More" arrives in one chunk, "M" was included in the component block
+      const input = 'Here is a card:\n\n[{c:"StatusCard",p:{"title":"Test"}}]\n\nMore text.';
+      
+      // Simulate streaming in one large chunk (like 5+ chars/tick)
+      const registry = processNewContent(INITIAL_REGISTRY, input);
+      
+      // Should have 3 blocks: paragraph, component, paragraph
+      expect(registry.blocks.length).toBe(2);
+      expect(registry.blocks[0].type).toBe('paragraph');
+      expect(registry.blocks[0].content.trim()).toBe('Here is a card:');
+      expect(registry.blocks[1].type).toBe('component');
+      // Component should NOT include any text after }}]
+      expect(registry.blocks[1].content).not.toContain('More');
+      expect(registry.blocks[1].content).not.toContain('M');
+      
+      // Active block should be the "More text." paragraph
+      expect(registry.activeBlock?.type).toBe('paragraph');
+      expect(registry.activeBlock?.content.trim()).toBe('More text.');
+    });
+
+    it('should handle component followed immediately by text (no double newline)', () => {
+      // Edge case: component ends and text follows with just single newline
+      const input = '[{c:"Card",p:{}}]\nNext line';
+      const registry = processNewContent(INITIAL_REGISTRY, input);
+      
+      // Component should be finalized at }}]
+      expect(registry.blocks.length).toBe(1);
+      expect(registry.blocks[0].type).toBe('component');
+      expect(registry.blocks[0].content).toBe('[{c:"Card",p:{}}]');
+      
+      // "Next line" should be in active block
+      expect(registry.activeBlock?.content.trim()).toBe('Next line');
+    });
+
+    it('should handle component boundary correctly regardless of chunk size', () => {
+      // Test that same input produces same result whether streamed char-by-char or all at once
+      const fullInput = '[{c:"Test",p:{"x":1}}]\n\nFollowing text';
+      
+      // All at once
+      const allAtOnce = processNewContent(INITIAL_REGISTRY, fullInput);
+      
+      // Character by character
+      let charByChar = INITIAL_REGISTRY;
+      for (let i = 1; i <= fullInput.length; i++) {
+        charByChar = processNewContent(charByChar, fullInput.slice(0, i));
+      }
+      
+      // Results should be identical
+      expect(charByChar.blocks.length).toBe(allAtOnce.blocks.length);
+      expect(charByChar.blocks[0].type).toBe(allAtOnce.blocks[0].type);
+      expect(charByChar.blocks[0].content).toBe(allAtOnce.blocks[0].content);
+      expect(charByChar.activeBlock?.content).toBe(allAtOnce.activeBlock?.content);
+    });
   });
   
   describe('Paragraph detection', () => {

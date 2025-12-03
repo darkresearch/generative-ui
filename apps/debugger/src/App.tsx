@@ -9,8 +9,8 @@ import {
 } from 'react-native';
 import { StyleSheet, UnistylesRuntime } from 'react-native-unistyles';
 import { StreamdownRN, type DebugSnapshot } from 'streamdown-rn';
+import { debugComponentRegistry } from '@darkresearch/debug-components';
 import { PRESETS } from './presets';
-import { debugComponentRegistry } from './debugComponents';
 
 // Configure Unistyles
 StyleSheet.configure({

@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.28.4",
+    "@darkresearch/debug-components": "workspace:*",
     "streamdown-rn": "workspace:*",
     "@expo-google-fonts/geist": "^0.4.1",
     "@expo/metro-runtime": "~6.1.2",

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { View, Text, ScrollView } from 'react-native';
 import { StyleSheet, UnistylesRuntime } from 'react-native-unistyles';
 import { StreamdownRN } from 'streamdown-rn';
+import { debugComponentRegistry } from '@darkresearch/debug-components';
 
 const WS_URL = 'ws://localhost:3001';
 
@@ -97,7 +98,9 @@ export default function App() {
         contentContainerStyle={styles.contentContainer}
       >
         {content ? (
-          <StreamdownRN>{content}</StreamdownRN>
+          <StreamdownRN componentRegistry={debugComponentRegistry}>
+            {content}
+          </StreamdownRN>
         ) : (
           <Text style={styles.placeholder}>
             Waiting for content from web debugger...
