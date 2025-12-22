@@ -1,11 +1,28 @@
-import { useState, useCallback } from 'react';
-import { View, Text, Pressable, TextInput } from 'react-native';
+import { useState, useCallback, useMemo } from 'react';
+import { View, Text, Pressable, TextInput, Image } from 'react-native';
 import { StyleSheet, UnistylesRuntime } from 'react-native-unistyles';
 import { FlashList } from '@shopify/flash-list';
 import { LegendList } from '@legendapp/list';
 import { StreamdownRN } from 'streamdown-rn';
 import Markdown from 'react-native-markdown-display';
 import { debugComponentRegistry } from '@darkresearch/debug-components';
+
+// Custom rules to fix "key prop being spread" warning in react-native-markdown-display
+const markdownRules = {
+  image: (node: any, children: any, parent: any, styles: any) => {
+    // Extract key separately to avoid spreading it into Image props
+    const { key, ...imageProps } = node.attributes || {};
+    return (
+      <Image
+        key={node.key}
+        source={{ uri: node.attributes?.src }}
+        style={{ width: '100%', minHeight: 200 }}
+        resizeMode="contain"
+        accessibilityLabel={node.attributes?.alt || 'Image'}
+      />
+    );
+  },
+};
 
 import type { ListType } from './ListPickerScreen';
 import {
@@ -104,7 +121,7 @@ export function ChatTestScreen({ listType, onBack }: ChatTestScreenProps) {
               {item.content}
             </StreamdownRN>
           ) : (
-            <Markdown>{item.content}</Markdown>
+            <Markdown rules={markdownRules}>{item.content}</Markdown>
           )}
         </View>
       );

@@ -19,11 +19,18 @@ export const INITIAL_MESSAGES: Message[] = [
     id: '2',
     messageNumber: 2,
     role: 'assistant',
-    content: `[MSG #2] Here's a sample image:
+    content: `[MSG #2] Here are images with different aspect ratios:
 
-![Sample 1](https://picsum.photos/400/200?random=1)
+**Wide (2:1):**
+![Wide](https://picsum.photos/seed/wide/600/300)
 
-Some text after the image.`,
+**Square (1:1):**
+![Square](https://picsum.photos/seed/square/400/400)
+
+**Tall (3:4):**
+![Tall](https://picsum.photos/seed/tall/300/400)
+
+All should display at their correct aspect ratios!`,
   },
   {
     id: '3',
@@ -45,7 +52,7 @@ React Native is a **framework** for building native mobile apps using JavaScript
 - Large ecosystem
 - Hot reloading
 
-![Sample 2](https://picsum.photos/400/250?random=2)
+![Sample 2](https://picsum.photos/seed/msg4/400/250)
 
 It was created by Facebook and is now used by many companies.`,
   },
@@ -63,7 +70,7 @@ It was created by Facebook and is now used by many companies.`,
 
 Here's another image:
 
-![Sample 3](https://picsum.photos/400/180?random=3)
+![Sample 3](https://picsum.photos/seed/msg6/400/180)
 
 And some code:
 
@@ -85,11 +92,11 @@ function hello() {
     role: 'assistant',
     content: `[MSG #8] Images below:
 
-![Sample 4](https://picsum.photos/400/220?random=4)
+![Sample 4](https://picsum.photos/seed/msg8a/400/220)
 
 More content here with **bold** and *italic* text.
 
-![Sample 5](https://picsum.photos/400/200?random=5)`,
+![Sample 5](https://picsum.photos/seed/msg8b/400/200)`,
   },
   {
     id: '9',
@@ -103,7 +110,7 @@ More content here with **bold** and *italic* text.
     role: 'assistant',
     content: `[MSG #10] Final Image
 
-![Sample 6](https://picsum.photos/400/240?random=6)
+![Sample 6](https://picsum.photos/seed/msg10/400/240)
 
 That's all the images!`,
   },

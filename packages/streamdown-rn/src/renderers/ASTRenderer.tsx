@@ -11,7 +11,7 @@
  * - Syntax highlighting for code blocks
  */
 
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useState, useEffect } from 'react';
 import { Text, View, ScrollView, Image, Platform } from 'react-native';
 import SyntaxHighlighter from 'react-native-syntax-highlighter';
 import type { Content, Parent, Table as TableNode, Code as CodeNode, List as ListNode, Image as ImageNode, Link as LinkNode } from 'mdast';
@@ -523,6 +523,61 @@ function renderTable(
 }
 
 /**
+ * Auto-sized image component that fetches dimensions and renders with correct aspect ratio
+ */
+function AutoSizedImage({
+  uri,
+  alt,
+  theme,
+}: {
+  uri: string;
+  alt?: string;
+  theme: ThemeConfig;
+}) {
+  const [aspectRatio, setAspectRatio] = useState<number>(16 / 9); // Default fallback
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    Image.getSize(
+      uri,
+      (width, height) => {
+        if (mounted && width && height) {
+          setAspectRatio(width / height);
+          setLoaded(true);
+        }
+      },
+      () => {
+        // On error, keep default aspect ratio
+        if (mounted) {
+          setLoaded(true);
+        }
+      }
+    );
+
+    return () => {
+      mounted = false;
+    };
+  }, [uri]);
+
+  return (
+    <Image
+      source={{ uri }}
+      style={{
+        width: '100%',
+        aspectRatio,
+        borderRadius: 8,
+        backgroundColor: theme.colors.codeBackground,
+        opacity: loaded ? 1 : 0.5,
+      }}
+      resizeMode="cover"
+      accessibilityLabel={alt || 'Image'}
+    />
+  );
+}
+
+/**
  * Render an image
  * URL is sanitized to prevent XSS via javascript: or data: protocols
  */
@@ -532,11 +587,11 @@ function renderImage(
   key?: string | number
 ): ReactNode {
   const styles = getTextStyles(theme);
-  
+
   if (!node.url) {
     return null;
   }
-  
+
   // Sanitize URL to prevent XSS
   const safeUrl = sanitizeURL(node.url);
   if (!safeUrl) {
@@ -552,25 +607,10 @@ function renderImage(
     }
     return null;
   }
-  
+
   return (
     <View key={key} style={{ marginVertical: theme.spacing.block }}>
-      <Image
-        source={{ uri: safeUrl }}
-        style={{ 
-          width: '100%', 
-          height: 200, 
-          borderRadius: 8,
-          backgroundColor: theme.colors.codeBackground,
-        }}
-        resizeMode="contain"
-        accessibilityLabel={node.alt || 'Image'}
-      />
-      {node.alt && (
-        <Text style={[styles.body, { color: theme.colors.muted, marginTop: 4, textAlign: 'center' }]}>
-          {node.alt}
-        </Text>
-      )}
+      <AutoSizedImage uri={safeUrl} alt={node.alt} theme={theme} />
     </View>
   );
 }
