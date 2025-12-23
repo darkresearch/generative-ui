@@ -193,6 +193,50 @@ The most important thing is to **start building** and iterate from there.
 
 Don't let analysis paralysis hold you back!`;
 
+// Streaming response for testing all custom renderers
+export const STREAMING_ALL_ELEMENTS_RESPONSE = `[MSG #NEW] Here's a comprehensive test of all custom renderers:
+
+# Heading Level 1
+
+This is a paragraph with [a link](https://example.com) in it.
+
+## Heading Level 2
+
+> This is a blockquote.
+> It can span multiple lines.
+> And include **bold** and *italic* text.
+
+### Heading Level 3
+
+Here's an image:
+
+![Sample Image](https://picsum.photos/seed/custom-renderer/400/200)
+
+#### Heading Level 4
+
+And a table:
+
+| Feature | Supported | Notes |
+| :--- | :---: | ---: |
+| Images | Yes | With alt text |
+| Links | Yes | With title |
+| Tables | Yes | With alignment |
+| Blockquotes | Yes | Nested too |
+
+##### Heading Level 5
+
+Finally, some code:
+
+\`\`\`typescript
+function greet(name: string): string {
+  return \`Hello, \${name}!\`;
+}
+\`\`\`
+
+###### Heading Level 6
+
+That's all the custom renderers!`;
+
 // Streaming response with code block - for testing custom code block renderer
 export const STREAMING_CODE_RESPONSE = `[MSG #NEW] Here's a code example:
 

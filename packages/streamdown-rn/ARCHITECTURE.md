@@ -148,11 +148,29 @@ Via `remark-gfm`:
 
 ### 5. Custom Renderers
 
-Override built-in rendering for specific element types. Currently supports code blocks.
+Override built-in rendering for any block-level element type.
+
+**Supported elements:**
+
+| Element | Props Interface | Use Cases |
+|---------|-----------------|-----------|
+| `codeBlock` | `CodeBlockRendererProps` | Syntax highlighting, copy button |
+| `image` | `ImageRendererProps` | Lazy loading, lightbox, CDN transforms |
+| `link` | `LinkRendererProps` | In-app navigation, external handling |
+| `blockquote` | `BlockquoteRendererProps` | Callouts, admonitions (tips/warnings) |
+| `table` | `TableRendererProps` | Sortable/filterable, responsive |
+| `heading` | `HeadingRendererProps` | Anchor links, collapsible sections |
 
 ```tsx
-import { StreamdownRN, type CodeBlockRendererProps } from 'streamdown-rn';
+import {
+  StreamdownRN,
+  type CodeBlockRendererProps,
+  type ImageRendererProps,
+  type LinkRendererProps,
+  type HeadingRendererProps,
+} from 'streamdown-rn';
 
+// Custom code block with copy button
 function CustomCodeBlock({ code, language, theme }: CodeBlockRendererProps) {
   return (
     <View style={{ backgroundColor: theme.colors.codeBackground }}>
@@ -165,23 +183,57 @@ function CustomCodeBlock({ code, language, theme }: CodeBlockRendererProps) {
   );
 }
 
+// Custom image with lazy loading
+function CustomImage({ src, alt, theme }: ImageRendererProps) {
+  return <FastImage source={{ uri: src }} style={styles.image} />;
+}
+
+// Custom link with in-app navigation
+function CustomLink({ href, children, theme }: LinkRendererProps) {
+  const handlePress = () => {
+    if (href.startsWith('/')) {
+      navigation.navigate(href);
+    } else {
+      Linking.openURL(href);
+    }
+  };
+  return <Text onPress={handlePress} style={styles.link}>{children}</Text>;
+}
+
+// Custom heading with anchor links
+function CustomHeading({ level, children, theme }: HeadingRendererProps) {
+  const Tag = `h${level}`;
+  return <Text style={styles[Tag]}># {children}</Text>;
+}
+
 // Memoize renderers object for performance
-const renderers = { codeBlock: CustomCodeBlock };
+const renderers = {
+  codeBlock: CustomCodeBlock,
+  image: CustomImage,
+  link: CustomLink,
+  heading: CustomHeading,
+};
 
 <StreamdownRN renderers={renderers}>
   {markdownContent}
 </StreamdownRN>
 ```
 
-**Props received by custom code block renderer:**
-- `code: string` — The code content (already parsed from markdown)
-- `language: string` — Language identifier (e.g., "typescript", "python", or "text")
-- `theme: ThemeConfig` — Current theme for consistent styling
+**Props received by each renderer:**
+
+| Renderer | Props |
+|----------|-------|
+| `codeBlock` | `code`, `language`, `theme`, `key` |
+| `image` | `src`, `alt?`, `title?`, `theme`, `key` |
+| `link` | `href`, `title?`, `children`, `theme`, `key` |
+| `blockquote` | `children`, `theme`, `key` |
+| `table` | `headers`, `rows`, `alignments`, `theme`, `key` |
+| `heading` | `level`, `children`, `theme`, `key` |
 
 **Streaming behavior:**
 - Custom renderers work identically during streaming
 - The data layer handles incomplete markdown (auto-closing code fences)
-- Renderers just receive progressively longer `code` values
+- Renderers just receive progressively longer content
 - No special streaming logic needed in custom renderers
 
 **Performance note:**

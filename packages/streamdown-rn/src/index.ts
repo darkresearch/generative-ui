@@ -51,6 +51,16 @@ export type {
   CustomRenderers,
   CodeBlockRenderer,
   CodeBlockRendererProps,
+  ImageRenderer,
+  ImageRendererProps,
+  LinkRenderer,
+  LinkRendererProps,
+  BlockquoteRenderer,
+  BlockquoteRendererProps,
+  TableRenderer,
+  TableRendererProps,
+  HeadingRenderer,
+  HeadingRendererProps,
 
   // Theme (for custom renderer styling)
   ThemeConfig,

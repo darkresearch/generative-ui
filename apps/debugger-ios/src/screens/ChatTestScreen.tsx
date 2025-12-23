@@ -3,7 +3,15 @@ import { View, Text, Pressable, TextInput, Image, ScrollView } from 'react-nativ
 import { StyleSheet, UnistylesRuntime } from 'react-native-unistyles';
 import { FlashList } from '@shopify/flash-list';
 import { LegendList } from '@legendapp/list';
-import { StreamdownRN, type CodeBlockRendererProps } from 'streamdown-rn';
+import {
+  StreamdownRN,
+  type CodeBlockRendererProps,
+  type ImageRendererProps,
+  type LinkRendererProps,
+  type BlockquoteRendererProps,
+  type TableRendererProps,
+  type HeadingRendererProps,
+} from 'streamdown-rn';
 import Markdown from 'react-native-markdown-display';
 import { debugComponentRegistry } from '@darkresearch/debug-components';
 import * as Clipboard from 'expo-clipboard';
@@ -31,11 +39,12 @@ import {
   INITIAL_MESSAGES,
   STREAMING_RESPONSE,
   STREAMING_CODE_RESPONSE,
+  STREAMING_ALL_ELEMENTS_RESPONSE,
   createUserMessage,
   createAssistantMessage,
 } from '../data/testMessages';
 
-type RenderMode = 'streamdown' | 'markdown' | 'custom-codeblock';
+type RenderMode = 'streamdown' | 'markdown' | 'custom-codeblock' | 'custom-all';
 
 /**
  * Custom Code Block Renderer with Copy Button
@@ -122,8 +131,242 @@ type ChatTestScreenProps = {
   onBack: () => void;
 };
 
+/**
+ * Custom Image Renderer
+ * Demonstrates custom image rendering with a border and label
+ */
+function CustomImage({ src, alt, theme }: ImageRendererProps) {
+  return (
+    <View style={allRenderersStyles.imageContainer}>
+      <Text style={allRenderersStyles.customLabel}>CUSTOM IMAGE</Text>
+      <Image
+        source={{ uri: src }}
+        style={allRenderersStyles.image}
+        resizeMode="cover"
+        accessibilityLabel={alt || 'Image'}
+      />
+      {alt && <Text style={allRenderersStyles.imageAlt}>{alt}</Text>}
+    </View>
+  );
+}
+
+/**
+ * Custom Link Renderer
+ * Demonstrates custom link styling
+ */
+function CustomLink({ href, children, theme }: LinkRendererProps) {
+  return (
+    <Text style={allRenderersStyles.link}>
+      🔗 {children}
+    </Text>
+  );
+}
+
+/**
+ * Custom Blockquote Renderer
+ * Demonstrates custom blockquote with a colored bar
+ */
+function CustomBlockquote({ children, theme }: BlockquoteRendererProps) {
+  return (
+    <View style={allRenderersStyles.blockquote}>
+      <Text style={allRenderersStyles.customLabel}>CUSTOM BLOCKQUOTE</Text>
+      <View style={allRenderersStyles.blockquoteInner}>
+        <View style={allRenderersStyles.blockquoteBar} />
+        <View style={allRenderersStyles.blockquoteContent}>
+          {children}
+        </View>
+      </View>
+    </View>
+  );
+}
+
+/**
+ * Custom Table Renderer
+ * Demonstrates custom table styling
+ */
+function CustomTable({ headers, rows, alignments, theme }: TableRendererProps) {
+  return (
+    <View style={allRenderersStyles.table}>
+      <Text style={allRenderersStyles.customLabel}>CUSTOM TABLE</Text>
+      <View style={allRenderersStyles.tableInner}>
+        <View style={allRenderersStyles.tableHeader}>
+          {headers.map((header, i) => (
+            <View key={i} style={allRenderersStyles.tableCell}>
+              <Text style={allRenderersStyles.tableHeaderText}>{header}</Text>
+            </View>
+          ))}
+        </View>
+        {rows.map((row, rowIndex) => (
+          <View key={rowIndex} style={allRenderersStyles.tableRow}>
+            {row.map((cell, cellIndex) => (
+              <View key={cellIndex} style={allRenderersStyles.tableCell}>
+                <Text style={allRenderersStyles.tableCellText}>{cell}</Text>
+              </View>
+            ))}
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+/**
+ * Custom Heading Renderer
+ * Demonstrates custom heading with level indicator
+ */
+function CustomHeading({ level, children, theme }: HeadingRendererProps) {
+  const sizes = [26, 22, 18, 16, 14, 12];
+  return (
+    <View style={allRenderersStyles.headingContainer}>
+      <Text style={allRenderersStyles.headingLevel}>H{level}</Text>
+      <Text style={[allRenderersStyles.headingText, { fontSize: sizes[level - 1] }]}>
+        {children}
+      </Text>
+    </View>
+  );
+}
+
+// Styles for all custom renderers
+const allRenderersStyles = StyleSheet.create((theme) => ({
+  // Common label for all custom renderers
+  customLabel: {
+    backgroundColor: '#4ade80',
+    color: '#000',
+    fontSize: 10,
+    fontWeight: 'bold',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    alignSelf: 'flex-start',
+    borderRadius: 4,
+    marginBottom: 6,
+    letterSpacing: 1,
+  },
+  // Image
+  imageContainer: {
+    marginVertical: 8,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: '#4ade80',
+    padding: 8,
+    backgroundColor: 'rgba(74, 222, 128, 0.1)',
+  },
+  image: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    borderRadius: 4,
+  },
+  imageAlt: {
+    color: '#888',
+    fontSize: 12,
+    marginTop: 6,
+    fontStyle: 'italic',
+  },
+  // Link
+  link: {
+    color: '#4ade80',
+    fontWeight: '600',
+  },
+  // Blockquote
+  blockquote: {
+    marginVertical: 8,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: '#4ade80',
+    padding: 8,
+    backgroundColor: 'rgba(74, 222, 128, 0.1)',
+  },
+  blockquoteInner: {
+    flexDirection: 'row',
+  },
+  blockquoteBar: {
+    width: 4,
+    backgroundColor: '#4ade80',
+    borderRadius: 2,
+    marginRight: 12,
+  },
+  blockquoteContent: {
+    flex: 1,
+  },
+  // Table
+  table: {
+    marginVertical: 8,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: '#4ade80',
+    padding: 8,
+    backgroundColor: 'rgba(74, 222, 128, 0.1)',
+  },
+  tableInner: {
+    borderRadius: 4,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#4ade80',
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(74, 222, 128, 0.3)',
+  },
+  tableRow: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    borderTopColor: '#4ade80',
+  },
+  tableCell: {
+    flex: 1,
+    padding: 8,
+  },
+  tableHeaderText: {
+    color: '#4ade80',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  tableCellText: {
+    color: '#fff',
+    fontSize: 12,
+  },
+  // Heading
+  headingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 6,
+    gap: 8,
+    backgroundColor: 'rgba(74, 222, 128, 0.1)',
+    padding: 8,
+    borderRadius: 6,
+    borderLeftWidth: 4,
+    borderLeftColor: '#4ade80',
+  },
+  headingLevel: {
+    backgroundColor: '#4ade80',
+    color: '#000',
+    fontSize: 10,
+    fontWeight: 'bold',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  headingText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    flex: 1,
+  },
+}));
+
 // Memoize renderers object to avoid recreating on every render
 const customCodeRenderers = { codeBlock: CustomCodeBlockWithCopyButton };
+
+// All custom renderers for testing all element types
+const customAllRenderers = {
+  codeBlock: CustomCodeBlockWithCopyButton,
+  image: CustomImage,
+  link: CustomLink,
+  blockquote: CustomBlockquote,
+  table: CustomTable,
+  heading: CustomHeading,
+};
 
 export function ChatTestScreen({ listType, onBack }: ChatTestScreenProps) {
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
@@ -151,10 +394,13 @@ export function ChatTestScreen({ listType, onBack }: ChatTestScreenProps) {
     setIsStreaming(true);
     setMessages((prev) => [...prev, assistantMessage]);
 
-    // Use code-focused response when in custom-codeblock mode
-    const baseResponse = renderMode === 'custom-codeblock'
-      ? STREAMING_CODE_RESPONSE
-      : STREAMING_RESPONSE;
+    // Use appropriate response based on render mode
+    const baseResponse =
+      renderMode === 'custom-all'
+        ? STREAMING_ALL_ELEMENTS_RESPONSE
+        : renderMode === 'custom-codeblock'
+          ? STREAMING_CODE_RESPONSE
+          : STREAMING_RESPONSE;
 
     // Stream characters
     const interval = setInterval(() => {
@@ -206,6 +452,13 @@ export function ChatTestScreen({ listType, onBack }: ChatTestScreenProps) {
           </View>
           {isUser ? (
             <Text style={styles.userText}>{item.content}</Text>
+          ) : renderMode === 'custom-all' ? (
+            <StreamdownRN
+              componentRegistry={debugComponentRegistry}
+              renderers={customAllRenderers}
+            >
+              {item.content}
+            </StreamdownRN>
           ) : renderMode === 'custom-codeblock' ? (
             <StreamdownRN
               componentRegistry={debugComponentRegistry}
@@ -270,7 +523,23 @@ export function ChatTestScreen({ listType, onBack }: ChatTestScreenProps) {
               renderMode === 'custom-codeblock' && styles.toggleTextActive,
             ]}
           >
-            Custom Code
+            Code
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() => setRenderMode('custom-all')}
+          style={[
+            styles.toggleButton,
+            renderMode === 'custom-all' && styles.toggleButtonActive,
+          ]}
+        >
+          <Text
+            style={[
+              styles.toggleText,
+              renderMode === 'custom-all' && styles.toggleTextActive,
+            ]}
+          >
+            All
           </Text>
         </Pressable>
         <Pressable
@@ -381,26 +650,29 @@ const styles = StyleSheet.create((theme) => ({
   },
   toggleContainer: {
     flexDirection: 'row',
-    padding: 8,
-    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 6,
     backgroundColor: theme.colors.statusBg,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
   },
   toggleButton: {
-    flex: 1,
-    padding: 10,
-    borderRadius: 8,
-    backgroundColor: '#2a2a2a',
-    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#444',
   },
   toggleButtonActive: {
     backgroundColor: '#4ade80',
+    borderColor: '#4ade80',
   },
   toggleText: {
     color: '#888',
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '500',
   },
   toggleTextActive: {
     color: '#000',

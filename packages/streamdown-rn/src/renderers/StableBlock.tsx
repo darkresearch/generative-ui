@@ -51,10 +51,15 @@ export const StableBlock: React.FC<StableBlockProps> = React.memo(
     console.warn('StableBlock has no AST:', block.type, block.id);
     return null;
   },
-  // Re-render if content hash OR renderers change
+  // Re-render if content hash OR any renderer changes
   (prev, next) =>
     prev.block.contentHash === next.block.contentHash &&
-    prev.renderers?.codeBlock === next.renderers?.codeBlock
+    prev.renderers?.codeBlock === next.renderers?.codeBlock &&
+    prev.renderers?.image === next.renderers?.image &&
+    prev.renderers?.link === next.renderers?.link &&
+    prev.renderers?.blockquote === next.renderers?.blockquote &&
+    prev.renderers?.table === next.renderers?.table &&
+    prev.renderers?.heading === next.renderers?.heading
 );
 
 StableBlock.displayName = 'StableBlock';

@@ -145,6 +145,18 @@ function renderNode(
       );
 
     case 'heading':
+      // Check for custom heading renderer
+      if (renderers?.heading) {
+        return (
+          <React.Fragment key={key}>
+            {renderers.heading({
+              level: node.depth as 1 | 2 | 3 | 4 | 5 | 6,
+              children: renderChildren(node, theme, componentRegistry, isStreaming, renderers),
+              theme,
+            })}
+          </React.Fragment>
+        );
+      }
       const headingStyle = styles[`heading${node.depth}` as keyof typeof styles];
       return (
         <Text key={key} style={headingStyle}>
@@ -157,16 +169,30 @@ function renderNode(
       if (renderers?.codeBlock) {
         const codeNode = node as CodeNode;
         const code = codeNode.value.replace(/\n+$/, '');
-        return renderers.codeBlock({
-          code,
-          language: codeNode.lang || 'text',
-          theme,
-          key,
-        });
+        return (
+          <React.Fragment key={key}>
+            {renderers.codeBlock({
+              code,
+              language: codeNode.lang || 'text',
+              theme,
+            })}
+          </React.Fragment>
+        );
       }
       return renderCodeBlock(node as CodeNode, theme, key);
     
     case 'blockquote':
+      // Check for custom blockquote renderer
+      if (renderers?.blockquote) {
+        return (
+          <React.Fragment key={key}>
+            {renderers.blockquote({
+              children: renderChildren(node, theme, componentRegistry, isStreaming, renderers),
+              theme,
+            })}
+          </React.Fragment>
+        );
+      }
       return renderBlockquote(node, theme, componentRegistry, isStreaming, renderers, key);
 
     case 'list':
@@ -187,8 +213,49 @@ function renderNode(
         <View key={key} style={blockStyles.horizontalRule} />
       );
 
-    case 'table':
-      return renderTable(node as TableNode, theme, componentRegistry, isStreaming, renderers, key);
+    case 'table': {
+      const tableNode = node as TableNode;
+
+      // Check for custom table renderer
+      if (renderers?.table) {
+        const tableRows = tableNode.children;
+        if (tableRows.length === 0) return null;
+
+        const headerRow = tableRows[0];
+        const bodyRows = tableRows.slice(1);
+
+        // Render header cells as ReactNode[]
+        const headers = headerRow.children.map((cell, cellIndex) =>
+          cell.children.map((child, childIndex) =>
+            renderNode(child as Content, theme, componentRegistry, isStreaming, renderers, `h-${cellIndex}-${childIndex}`)
+          )
+        );
+
+        // Render body rows as ReactNode[][]
+        const rows = bodyRows.map((row, rowIndex) =>
+          row.children.map((cell, cellIndex) =>
+            cell.children.map((child, childIndex) =>
+              renderNode(child as Content, theme, componentRegistry, isStreaming, renderers, `r-${rowIndex}-${cellIndex}-${childIndex}`)
+            )
+          )
+        );
+
+        // Get alignments from table node (GFM feature)
+        const alignments = tableNode.align || [];
+
+        return (
+          <React.Fragment key={key}>
+            {renderers.table({
+              headers,
+              rows,
+              alignments,
+              theme,
+            })}
+          </React.Fragment>
+        );
+      }
+      return renderTable(tableNode, theme, componentRegistry, isStreaming, renderers, key);
+    }
     
     case 'html':
       // Render HTML as plain text (React Native doesn't support HTML)
@@ -252,6 +319,20 @@ function renderNode(
         );
       }
 
+      // Check for custom link renderer
+      if (renderers?.link) {
+        return (
+          <React.Fragment key={key}>
+            {renderers.link({
+              href: safeUrl,
+              title: linkNode.title ?? undefined,
+              children: renderChildren(node, theme, componentRegistry, isStreaming, renderers),
+              theme,
+            })}
+          </React.Fragment>
+        );
+      }
+
       return (
         <Text
           key={key}
@@ -263,8 +344,26 @@ function renderNode(
       );
     }
     
-    case 'image':
-      return renderImage(node as ImageNode, theme, key);
+    case 'image': {
+      const imageNode = node as ImageNode;
+      const safeImageUrl = sanitizeURL(imageNode.url);
+
+      // Check for custom image renderer
+      if (renderers?.image) {
+        if (!safeImageUrl) return null;
+        return (
+          <React.Fragment key={key}>
+            {renderers.image({
+              src: safeImageUrl,
+              alt: imageNode.alt ?? undefined,
+              title: imageNode.title ?? undefined,
+              theme,
+            })}
+          </React.Fragment>
+        );
+      }
+      return renderImage(imageNode, theme, key);
+    }
     
     case 'break':
       return '\n';
