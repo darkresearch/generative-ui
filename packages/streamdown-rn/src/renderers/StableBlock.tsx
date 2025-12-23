@@ -6,13 +6,14 @@
  */
 
 import React from 'react';
-import type { StableBlock as StableBlockType, ThemeConfig, ComponentRegistry } from '../core/types';
+import type { StableBlock as StableBlockType, ThemeConfig, ComponentRegistry, CustomRenderers } from '../core/types';
 import { ASTRenderer, ComponentBlock } from './ASTRenderer';
 
 interface StableBlockProps {
   block: StableBlockType;
   theme: ThemeConfig;
   componentRegistry?: ComponentRegistry;
+  renderers?: CustomRenderers;
 }
 
 /**
@@ -22,7 +23,7 @@ interface StableBlockProps {
  * The block prop is immutable — once finalized, content never changes.
  */
 export const StableBlock: React.FC<StableBlockProps> = React.memo(
-  ({ block, theme, componentRegistry }) => {
+  ({ block, theme, componentRegistry, renderers }) => {
     // Component blocks don't have AST (custom syntax, not markdown)
     if (block.type === 'component') {
       return (
@@ -33,7 +34,7 @@ export const StableBlock: React.FC<StableBlockProps> = React.memo(
         />
       );
     }
-    
+
     // Render from cached AST
     if (block.ast) {
       return (
@@ -41,10 +42,11 @@ export const StableBlock: React.FC<StableBlockProps> = React.memo(
           node={block.ast}
           theme={theme}
           componentRegistry={componentRegistry}
+          renderers={renderers}
         />
       );
     }
-    
+
     // Fallback if no AST (shouldn't happen for stable blocks)
     console.warn('StableBlock has no AST:', block.type, block.id);
     return null;

@@ -189,6 +189,54 @@ export interface ValidationResult {
 }
 
 // ============================================================================
+// Custom Renderers
+// ============================================================================
+
+/**
+ * Props passed to a custom code block renderer.
+ * Allows consumers to provide their own code block component.
+ */
+export interface CodeBlockRendererProps {
+  /** The code content (trailing newlines trimmed) */
+  code: string;
+  /** The language identifier (e.g., "typescript", "python", or "text" if none) */
+  language: string;
+  /** Current theme configuration for styling consistency */
+  theme: ThemeConfig;
+  /** React key for list rendering */
+  key?: string | number;
+}
+
+/**
+ * A custom renderer function for code blocks.
+ * Return a React node to render your custom code block.
+ */
+export type CodeBlockRenderer = (props: CodeBlockRendererProps) => ReactNode;
+
+/**
+ * Registry of custom renderers to override built-in rendering.
+ * Each renderer is optional — if not provided, the default renderer is used.
+ *
+ * @example
+ * ```tsx
+ * <StreamdownRN
+ *   renderers={{
+ *     codeBlock: ({ code, language, theme }) => (
+ *       <MyCodeBlock code={code} language={language} />
+ *     )
+ *   }}
+ * >
+ *   {content}
+ * </StreamdownRN>
+ * ```
+ */
+export interface CustomRenderers {
+  /** Custom code block renderer (```code```) */
+  codeBlock?: CodeBlockRenderer;
+  // Future: image?, blockquote?, table?, etc.
+}
+
+// ============================================================================
 // Theme Configuration
 // ============================================================================
 
@@ -298,7 +346,7 @@ export interface StreamdownRNProps {
   style?: object;
   /** Error callback for component failures */
   onError?: (error: Error, componentName?: string) => void;
-  /** 
+  /**
    * Debug callback — called on every content update.
    * Use for observability, debugging, or testing.
    * Only enable in development to avoid performance overhead.
@@ -311,6 +359,11 @@ export interface StreamdownRNProps {
    * transition from skeleton to final state.
    */
   isComplete?: boolean;
+  /**
+   * Custom renderers to override built-in block rendering.
+   * Use this to provide your own code block component, etc.
+   */
+  renderers?: CustomRenderers;
 }
 
 /**

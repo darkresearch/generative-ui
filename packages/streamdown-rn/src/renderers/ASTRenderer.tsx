@@ -15,7 +15,7 @@ import React, { ReactNode, useState, useEffect } from 'react';
 import { Text, View, ScrollView, Image, Platform } from 'react-native';
 import SyntaxHighlighter from 'react-native-syntax-highlighter';
 import type { Content, Parent, Table as TableNode, Code as CodeNode, List as ListNode, Image as ImageNode, Link as LinkNode } from 'mdast';
-import type { ThemeConfig, ComponentRegistry, StableBlock } from '../core/types';
+import type { ThemeConfig, ComponentRegistry, StableBlock, CustomRenderers } from '../core/types';
 import { getTextStyles, getBlockStyles } from '../themes';
 import { extractComponentData, type ComponentData } from '../core/componentParser';
 import { sanitizeURL } from '../core/sanitize';
@@ -95,6 +95,8 @@ export interface ASTRendererProps {
   componentRegistry?: ComponentRegistry;
   /** Whether this is streaming (for components) */
   isStreaming?: boolean;
+  /** Custom renderers to override built-in rendering */
+  renderers?: CustomRenderers;
 }
 
 /**
@@ -107,8 +109,9 @@ export const ASTRenderer: React.FC<ASTRendererProps> = ({
   theme,
   componentRegistry,
   isStreaming = false,
+  renderers,
 }) => {
-  return <>{renderNode(node, theme, componentRegistry, isStreaming)}</>;
+  return <>{renderNode(node, theme, componentRegistry, isStreaming, renderers)}</>;
 };
 
 // ============================================================================
@@ -123,57 +126,69 @@ function renderNode(
   theme: ThemeConfig,
   componentRegistry?: ComponentRegistry,
   isStreaming = false,
+  renderers?: CustomRenderers,
   key?: string | number
 ): ReactNode {
   const styles = getTextStyles(theme);
   const blockStyles = getBlockStyles(theme);
-  
+
   switch (node.type) {
     // ========================================================================
     // Block-level nodes
     // ========================================================================
-    
+
     case 'paragraph':
       return (
         <Text key={key} style={styles.paragraph}>
-          {renderChildren(node, theme, componentRegistry, isStreaming)}
+          {renderChildren(node, theme, componentRegistry, isStreaming, renderers)}
         </Text>
       );
-    
+
     case 'heading':
       const headingStyle = styles[`heading${node.depth}` as keyof typeof styles];
       return (
         <Text key={key} style={headingStyle}>
-          {renderChildren(node, theme, componentRegistry, isStreaming)}
+          {renderChildren(node, theme, componentRegistry, isStreaming, renderers)}
         </Text>
       );
-    
+
     case 'code':
+      // Check for custom code block renderer
+      if (renderers?.codeBlock) {
+        const codeNode = node as CodeNode;
+        const code = codeNode.value.replace(/\n+$/, '');
+        return renderers.codeBlock({
+          code,
+          language: codeNode.lang || 'text',
+          theme,
+          key,
+        });
+      }
       return renderCodeBlock(node as CodeNode, theme, key);
     
     case 'blockquote':
-      return renderBlockquote(node, theme, componentRegistry, isStreaming, key);
-    
+      return renderBlockquote(node, theme, componentRegistry, isStreaming, renderers, key);
+
     case 'list':
-      return renderList(node as ListNode, theme, componentRegistry, isStreaming, key);
-    
+      return renderList(node as ListNode, theme, componentRegistry, isStreaming, renderers, key);
+
     case 'listItem':
       return (
         <View key={key} style={{ flexDirection: 'row', marginBottom: 4 }}>
           <Text style={styles.body}>• </Text>
           <View style={{ flex: 1 }}>
-            {renderChildren(node, theme, componentRegistry, isStreaming)}
+            {renderChildren(node, theme, componentRegistry, isStreaming, renderers)}
           </View>
         </View>
       );
-    
+
     case 'thematicBreak':
       return (
         <View key={key} style={blockStyles.horizontalRule} />
       );
-    
+
     case 'table':
-      return renderTable(node as TableNode, theme, componentRegistry, isStreaming, key);
+      return renderTable(node as TableNode, theme, componentRegistry, isStreaming, renderers, key);
     
     case 'html':
       // Render HTML as plain text (React Native doesn't support HTML)
@@ -190,29 +205,29 @@ function renderNode(
     case 'text':
       // Check if text contains inline component syntax
       if (node.value.includes('[{c:')) {
-        return renderTextWithComponents(node.value, theme, componentRegistry, isStreaming, key);
+        return renderTextWithComponents(node.value, theme, componentRegistry, isStreaming, renderers, key);
       }
       return node.value;
-    
+
     case 'strong':
       return (
         <Text key={key} style={styles.bold}>
-          {renderChildren(node, theme, componentRegistry, isStreaming)}
+          {renderChildren(node, theme, componentRegistry, isStreaming, renderers)}
         </Text>
       );
-    
+
     case 'emphasis':
       return (
         <Text key={key} style={styles.italic}>
-          {renderChildren(node, theme, componentRegistry, isStreaming)}
+          {renderChildren(node, theme, componentRegistry, isStreaming, renderers)}
         </Text>
       );
-    
+
     case 'delete':
       // GFM strikethrough
       return (
         <Text key={key} style={styles.strikethrough}>
-          {renderChildren(node, theme, componentRegistry, isStreaming)}
+          {renderChildren(node, theme, componentRegistry, isStreaming, renderers)}
         </Text>
       );
     
@@ -227,23 +242,23 @@ function renderNode(
       // Sanitize URL to prevent XSS via javascript: or data: protocols
       const linkNode = node as LinkNode;
       const safeUrl = sanitizeURL(linkNode.url);
-      
+
       // If URL is dangerous, render children as plain text without link styling
       if (!safeUrl) {
         return (
           <Text key={key} style={styles.body}>
-            {renderChildren(node, theme, componentRegistry, isStreaming)}
+            {renderChildren(node, theme, componentRegistry, isStreaming, renderers)}
           </Text>
         );
       }
-      
+
       return (
         <Text
           key={key}
           style={styles.link}
           accessibilityRole="link"
         >
-          {renderChildren(node, theme, componentRegistry, isStreaming)}
+          {renderChildren(node, theme, componentRegistry, isStreaming, renderers)}
         </Text>
       );
     }
@@ -290,14 +305,15 @@ function renderChildren(
   node: Parent,
   theme: ThemeConfig,
   componentRegistry?: ComponentRegistry,
-  isStreaming = false
+  isStreaming = false,
+  renderers?: CustomRenderers
 ): ReactNode {
   if (!('children' in node) || !node.children) {
     return null;
   }
-  
+
   return node.children.map((child, index) =>
-    renderNode(child as Content, theme, componentRegistry, isStreaming, index)
+    renderNode(child as Content, theme, componentRegistry, isStreaming, renderers, index)
   );
 }
 
@@ -370,11 +386,12 @@ function renderList(
   theme: ThemeConfig,
   componentRegistry?: ComponentRegistry,
   isStreaming = false,
+  renderers?: CustomRenderers,
   key?: string | number
 ): ReactNode {
   const styles = getTextStyles(theme);
   const ordered = node.ordered ?? false;
-  
+
   return (
     <View key={key} style={{ marginBottom: theme.spacing.block }}>
       {node.children.map((item, index) => (
@@ -384,7 +401,7 @@ function renderList(
           </Text>
           <View style={{ flex: 1 }}>
             {item.children.map((child, childIndex) =>
-              renderListItemChild(child as Content, theme, componentRegistry, isStreaming, childIndex)
+              renderListItemChild(child as Content, theme, componentRegistry, isStreaming, renderers, childIndex)
             )}
           </View>
         </View>
@@ -402,30 +419,31 @@ function renderListItemChild(
   theme: ThemeConfig,
   componentRegistry?: ComponentRegistry,
   isStreaming = false,
+  renderers?: CustomRenderers,
   key?: string | number
 ): ReactNode {
   const styles = getTextStyles(theme);
-  
+
   // For paragraphs inside list items, render without margin
   if (node.type === 'paragraph') {
     return (
       <Text key={key} style={[styles.body, { marginBottom: 0 }]}>
-        {renderChildren(node, theme, componentRegistry, isStreaming)}
+        {renderChildren(node, theme, componentRegistry, isStreaming, renderers)}
       </Text>
     );
   }
-  
+
   // For nested lists, render with reduced margin
   if (node.type === 'list') {
     return (
       <View key={key} style={{ marginTop: 4, marginBottom: 0 }}>
-        {renderList(node as ListNode, theme, componentRegistry, isStreaming)}
+        {renderList(node as ListNode, theme, componentRegistry, isStreaming, renderers)}
       </View>
     );
   }
-  
+
   // For other types, use normal rendering
-  return renderNode(node, theme, componentRegistry, isStreaming, key);
+  return renderNode(node, theme, componentRegistry, isStreaming, renderers, key);
 }
 
 /**
@@ -437,11 +455,12 @@ function renderBlockquote(
   theme: ThemeConfig,
   componentRegistry?: ComponentRegistry,
   isStreaming = false,
+  renderers?: CustomRenderers,
   key?: string | number
 ): ReactNode {
   const styles = getTextStyles(theme);
   const blockStyles = getBlockStyles(theme);
-  
+
   return (
     <View key={key} style={blockStyles.blockquote}>
       {node.children?.map((child, index) => {
@@ -449,12 +468,12 @@ function renderBlockquote(
         if (child.type === 'paragraph') {
           return (
             <Text key={index} style={[styles.body, { marginBottom: 0 }]}>
-              {renderChildren(child, theme, componentRegistry, isStreaming)}
+              {renderChildren(child, theme, componentRegistry, isStreaming, renderers)}
             </Text>
           );
         }
         // For other types, use normal rendering
-        return renderNode(child, theme, componentRegistry, isStreaming, index);
+        return renderNode(child, theme, componentRegistry, isStreaming, renderers, index);
       })}
     </View>
   );
@@ -468,22 +487,23 @@ function renderTable(
   theme: ThemeConfig,
   componentRegistry?: ComponentRegistry,
   isStreaming = false,
+  renderers?: CustomRenderers,
   key?: string | number
 ): ReactNode {
   const styles = getTextStyles(theme);
   const rows = node.children;
-  
+
   if (rows.length === 0) return null;
-  
+
   const headerRow = rows[0];
   const bodyRows = rows.slice(1);
-  
+
   return (
     <View key={key} style={{ marginBottom: theme.spacing.block }}>
       {/* Header */}
-      <View style={{ 
-        flexDirection: 'row', 
-        borderBottomWidth: 2, 
+      <View style={{
+        flexDirection: 'row',
+        borderBottomWidth: 2,
         borderBottomColor: theme.colors.border,
         paddingBottom: 8,
         marginBottom: 8,
@@ -492,16 +512,16 @@ function renderTable(
           <View key={cellIndex} style={{ flex: 1, paddingHorizontal: 8 }}>
             <Text style={[styles.bold, { fontSize: 14 }]}>
               {cell.children.map((child, childIndex) =>
-                renderNode(child as Content, theme, componentRegistry, isStreaming, childIndex)
+                renderNode(child as Content, theme, componentRegistry, isStreaming, renderers, childIndex)
               )}
             </Text>
           </View>
         ))}
       </View>
-      
+
       {/* Body */}
       {bodyRows.map((row, rowIndex) => (
-        <View key={rowIndex} style={{ 
+        <View key={rowIndex} style={{
           flexDirection: 'row',
           borderBottomWidth: 1,
           borderBottomColor: theme.colors.border,
@@ -511,7 +531,7 @@ function renderTable(
             <View key={cellIndex} style={{ flex: 1, paddingHorizontal: 8 }}>
               <Text style={styles.body}>
                 {cell.children.map((child, childIndex) =>
-                  renderNode(child as Content, theme, componentRegistry, isStreaming, childIndex)
+                  renderNode(child as Content, theme, componentRegistry, isStreaming, renderers, childIndex)
                 )}
               </Text>
             </View>
@@ -623,20 +643,21 @@ function renderTextWithComponents(
   theme: ThemeConfig,
   componentRegistry?: ComponentRegistry,
   isStreaming = false,
+  renderers?: CustomRenderers,
   key?: string | number
 ): ReactNode {
   // Look for inline components
   const componentMatch = text.match(/\[\{c:\s*"([^"]+)"\s*,\s*p:\s*(\{[\s\S]*?\})\s*\}\]/);
-  
+
   if (!componentMatch) {
     return text;
   }
-  
+
   const before = text.slice(0, componentMatch.index);
   const after = text.slice(componentMatch.index! + componentMatch[0].length);
-  
+
   const { name, props } = extractComponentData(componentMatch[0]);
-  
+
   if (!componentRegistry) {
     return (
       <>
@@ -646,7 +667,7 @@ function renderTextWithComponents(
       </>
     );
   }
-  
+
   const componentDef = componentRegistry.get(name);
   if (!componentDef) {
     return (
@@ -657,14 +678,14 @@ function renderTextWithComponents(
       </>
     );
   }
-  
+
   const Component = componentDef.component;
-  
+
   return (
     <>
       {before}
       <Component key={key} {...props} _isInline={true} _isStreaming={isStreaming} />
-      {renderTextWithComponents(after, theme, componentRegistry, isStreaming, `${key}-after`)}
+      {renderTextWithComponents(after, theme, componentRegistry, isStreaming, renderers, `${key}-after`)}
     </>
   );
 }
@@ -831,7 +852,8 @@ export function renderAST(
   nodes: Content[],
   theme: ThemeConfig,
   componentRegistry?: ComponentRegistry,
-  isStreaming = false
+  isStreaming = false,
+  renderers?: CustomRenderers
 ): ReactNode {
-  return nodes.map((node, index) => renderNode(node, theme, componentRegistry, isStreaming, index));
+  return nodes.map((node, index) => renderNode(node, theme, componentRegistry, isStreaming, renderers, index));
 }

@@ -8,9 +8,16 @@ type IconProps = {
   strokeWidth?: number;
 };
 
+// Type for lucide icon components
+type LucideIconComponent = React.ComponentType<{
+  size?: number;
+  color?: string;
+  strokeWidth?: number;
+}>;
+
 /**
  * Icon component for web - uses Lucide SVG icons
- * 
+ *
  * Converts icon names to PascalCase and looks them up in lucide-react-native.
  * Example: "plus" -> "Plus", "chevron-right" -> "ChevronRight"
  */
@@ -20,15 +27,16 @@ export function Icon({ name, size = 24, color = '#000', strokeWidth }: IconProps
     .split('-')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join('');
-  
+
   // Look up the icon component from lucide-react-native
-  const IconComponent = (LucideIcons as Record<string, React.ComponentType<any>>)[pascalName];
-  
-  if (!IconComponent) {
+  // Use unknown first to avoid type comparison issues with mixed exports
+  const IconComponent = (LucideIcons as unknown as Record<string, LucideIconComponent>)[pascalName];
+
+  if (!IconComponent || typeof IconComponent !== 'function') {
     console.warn(`Icon "${name}" (resolved to "${pascalName}") not found in lucide-react-native`);
     return null;
   }
-  
+
   return <IconComponent size={size} color={color} strokeWidth={strokeWidth} />;
 }
 

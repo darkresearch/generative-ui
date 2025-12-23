@@ -10,7 +10,7 @@
  */
 
 import React from 'react';
-import type { ActiveBlock as ActiveBlockType, ThemeConfig, ComponentRegistry, IncompleteTagState } from '../core/types';
+import type { ActiveBlock as ActiveBlockType, ThemeConfig, ComponentRegistry, IncompleteTagState, CustomRenderers } from '../core/types';
 import { fixIncompleteMarkdown } from '../core/incomplete';
 import { parseBlockContent } from '../core/parser';
 import { ASTRenderer, ComponentBlock, extractComponentData } from './ASTRenderer';
@@ -20,6 +20,7 @@ interface ActiveBlockProps {
   tagState: IncompleteTagState;
   theme: ThemeConfig;
   componentRegistry?: ComponentRegistry;
+  renderers?: CustomRenderers;
 }
 
 /**
@@ -33,12 +34,13 @@ export const ActiveBlock: React.FC<ActiveBlockProps> = ({
   tagState,
   theme,
   componentRegistry,
+  renderers,
 }) => {
   // No active block — nothing to render
   if (!block || !block.content.trim()) {
     return null;
   }
-  
+
   // Special handling for component blocks (don't use remark)
   if (block.type === 'component') {
     const { name, props } = extractComponentData(block.content);
@@ -52,13 +54,13 @@ export const ActiveBlock: React.FC<ActiveBlockProps> = ({
       />
     );
   }
-  
+
   // Fix incomplete markdown for format-as-you-type UX
   const fixedContent = fixIncompleteMarkdown(block.content, tagState);
-  
+
   // Parse with remark
   const ast = parseBlockContent(fixedContent);
-  
+
   // Render from AST
   if (ast) {
     return (
@@ -67,10 +69,11 @@ export const ActiveBlock: React.FC<ActiveBlockProps> = ({
         theme={theme}
         componentRegistry={componentRegistry}
         isStreaming={true}
+        renderers={renderers}
       />
     );
   }
-  
+
   // Fallback if parsing fails (shouldn't happen)
   return null;
 };

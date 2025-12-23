@@ -1,11 +1,12 @@
 import { useState, useCallback, useMemo } from 'react';
-import { View, Text, Pressable, TextInput, Image } from 'react-native';
+import { View, Text, Pressable, TextInput, Image, ScrollView } from 'react-native';
 import { StyleSheet, UnistylesRuntime } from 'react-native-unistyles';
 import { FlashList } from '@shopify/flash-list';
 import { LegendList } from '@legendapp/list';
-import { StreamdownRN } from 'streamdown-rn';
+import { StreamdownRN, type CodeBlockRendererProps } from 'streamdown-rn';
 import Markdown from 'react-native-markdown-display';
 import { debugComponentRegistry } from '@darkresearch/debug-components';
+import * as Clipboard from 'expo-clipboard';
 
 // Custom rules to fix "key prop being spread" warning in react-native-markdown-display
 const markdownRules = {
@@ -29,11 +30,92 @@ import {
   Message,
   INITIAL_MESSAGES,
   STREAMING_RESPONSE,
+  STREAMING_CODE_RESPONSE,
   createUserMessage,
   createAssistantMessage,
 } from '../data/testMessages';
 
-type RenderMode = 'streamdown' | 'markdown';
+type RenderMode = 'streamdown' | 'markdown' | 'custom-codeblock';
+
+/**
+ * Custom Code Block Renderer with Copy Button
+ *
+ * Demonstrates custom code block rendering with:
+ * - Language label
+ * - Copy button
+ * - Horizontal scroll for long lines
+ */
+function CustomCodeBlockWithCopyButton({ code, language, theme }: CodeBlockRendererProps) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    await Clipboard.setStringAsync(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <View style={customCodeStyles.container}>
+      <View style={customCodeStyles.header}>
+        <Text style={customCodeStyles.language}>{language}</Text>
+        <Pressable onPress={handleCopy} style={customCodeStyles.copyButton}>
+          <Text style={customCodeStyles.copyText}>
+            {copied ? 'Copied!' : 'Copy'}
+          </Text>
+        </Pressable>
+      </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={customCodeStyles.codeScroll}>
+        <Text style={customCodeStyles.code}>{code}</Text>
+      </ScrollView>
+    </View>
+  );
+}
+
+// Styles for custom code block
+const customCodeStyles = StyleSheet.create((theme) => ({
+  container: {
+    backgroundColor: '#1e1e1e',
+    borderRadius: 8,
+    marginVertical: 8,
+    overflow: 'hidden',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#2d2d2d',
+    borderBottomWidth: 1,
+    borderBottomColor: '#3d3d3d',
+  },
+  language: {
+    color: '#888',
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+  copyButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 4,
+    backgroundColor: '#4ade80',
+  },
+  copyText: {
+    color: '#000',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  codeScroll: {
+    padding: 12,
+  },
+  code: {
+    fontFamily: 'monospace',
+    fontSize: 13,
+    color: '#d4d4d4',
+    lineHeight: 20,
+  },
+}));
 
 type ChatTestScreenProps = {
   listType: ListType;
@@ -66,11 +148,16 @@ export function ChatTestScreen({ listType, onBack }: ChatTestScreenProps) {
     setIsStreaming(true);
     setMessages((prev) => [...prev, assistantMessage]);
 
+    // Use code-focused response when in custom-codeblock mode
+    const baseResponse = renderMode === 'custom-codeblock'
+      ? STREAMING_CODE_RESPONSE
+      : STREAMING_RESPONSE;
+
     // Stream characters
     const interval = setInterval(() => {
       currentIndex++;
       const msgNum = messages.length + 2;
-      const streamContent = STREAMING_RESPONSE.replace('[MSG #NEW]', `[MSG #${msgNum}]`);
+      const streamContent = baseResponse.replace('[MSG #NEW]', `[MSG #${msgNum}]`);
       const currentContent = streamContent.slice(0, currentIndex);
 
       setMessages((prev) =>
@@ -90,7 +177,7 @@ export function ChatTestScreen({ listType, onBack }: ChatTestScreenProps) {
         setIsStreaming(false);
       }
     }, 15);
-  }, [messages.length]);
+  }, [messages.length, renderMode]);
 
   const renderMessage = useCallback(
     ({ item, index }: { item: Message; index: number }) => {
@@ -116,6 +203,13 @@ export function ChatTestScreen({ listType, onBack }: ChatTestScreenProps) {
           </View>
           {isUser ? (
             <Text style={styles.userText}>{item.content}</Text>
+          ) : renderMode === 'custom-codeblock' ? (
+            <StreamdownRN
+              componentRegistry={debugComponentRegistry}
+              renderers={{ codeBlock: CustomCodeBlockWithCopyButton }}
+            >
+              {item.content}
+            </StreamdownRN>
           ) : renderMode === 'streamdown' ? (
             <StreamdownRN componentRegistry={debugComponentRegistry}>
               {item.content}
@@ -157,7 +251,23 @@ export function ChatTestScreen({ listType, onBack }: ChatTestScreenProps) {
               renderMode === 'streamdown' && styles.toggleTextActive,
             ]}
           >
-            StreamdownRN
+            Streamdown
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() => setRenderMode('custom-codeblock')}
+          style={[
+            styles.toggleButton,
+            renderMode === 'custom-codeblock' && styles.toggleButtonActive,
+          ]}
+        >
+          <Text
+            style={[
+              styles.toggleText,
+              renderMode === 'custom-codeblock' && styles.toggleTextActive,
+            ]}
+          >
+            Custom Code
           </Text>
         </Pressable>
         <Pressable
@@ -190,8 +300,6 @@ export function ChatTestScreen({ listType, onBack }: ChatTestScreenProps) {
         <FlashList
           data={messages}
           keyExtractor={(item) => item.id}
-          estimatedItemSize={150}
-          maintainVisibleContentPosition={{ startRenderingFromBottom: true }}
           renderItem={renderMessage}
           contentContainerStyle={styles.listContent}
         />
