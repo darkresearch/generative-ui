@@ -28,6 +28,8 @@ PODS:
     - Yoga
   - ExpoAsset (12.0.10):
     - ExpoModulesCore
+  - ExpoClipboard (8.0.8):
+    - ExpoModulesCore
   - ExpoFileSystem (19.0.19):
     - ExpoModulesCore
   - ExpoFont (14.0.9):
@@ -1935,6 +1937,7 @@ DEPENDENCIES:
   - EXConstants (from `../../../node_modules/expo-constants/ios`)
   - Expo (from `../../../node_modules/expo`)
   - ExpoAsset (from `../../../node_modules/expo-asset/ios`)
+  - ExpoClipboard (from `../../../node_modules/expo-clipboard/ios`)
   - ExpoFileSystem (from `../../../node_modules/expo-file-system/ios`)
   - ExpoFont (from `../../../node_modules/expo-font/ios`)
   - ExpoHaptics (from `../../../node_modules/expo-haptics/ios`)
@@ -2022,6 +2025,8 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/expo"
   ExpoAsset:
     :path: "../../../node_modules/expo-asset/ios"
+  ExpoClipboard:
+    :path: "../../../node_modules/expo-clipboard/ios"
   ExpoFileSystem:
     :path: "../../../node_modules/expo-file-system/ios"
   ExpoFont:
@@ -2184,6 +2189,7 @@ SPEC CHECKSUMS:
   EXConstants: fd688cef4e401dcf798a021cfb5d87c890c30ba3
   Expo: 111394d38f32be09385d4c7f70cc96d2da438d0d
   ExpoAsset: d839c8eae8124470332408427327e8f88beb2dfd
+  ExpoClipboard: b36b287d8356887844bb08ed5c84b5979bb4dd1e
   ExpoFileSystem: 77157a101e03150a4ea4f854b4dd44883c93ae0a
   ExpoFont: cf9d90ec1d3b97c4f513211905724c8171f82961
   ExpoHaptics: 807476b0c39e9d82b7270349d6487928ce32df84

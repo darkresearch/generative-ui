@@ -122,6 +122,9 @@ type ChatTestScreenProps = {
   onBack: () => void;
 };
 
+// Memoize renderers object to avoid recreating on every render
+const customCodeRenderers = { codeBlock: CustomCodeBlockWithCopyButton };
+
 export function ChatTestScreen({ listType, onBack }: ChatTestScreenProps) {
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
   const [inputText, setInputText] = useState('');
@@ -206,7 +209,7 @@ export function ChatTestScreen({ listType, onBack }: ChatTestScreenProps) {
           ) : renderMode === 'custom-codeblock' ? (
             <StreamdownRN
               componentRegistry={debugComponentRegistry}
-              renderers={{ codeBlock: CustomCodeBlockWithCopyButton }}
+              renderers={customCodeRenderers}
             >
               {item.content}
             </StreamdownRN>
@@ -300,6 +303,7 @@ export function ChatTestScreen({ listType, onBack }: ChatTestScreenProps) {
         <FlashList
           data={messages}
           keyExtractor={(item) => item.id}
+          extraData={renderMode}
           renderItem={renderMessage}
           contentContainerStyle={styles.listContent}
         />
@@ -307,6 +311,7 @@ export function ChatTestScreen({ listType, onBack }: ChatTestScreenProps) {
         <LegendList
           data={messages}
           keyExtractor={(item) => item.id}
+          extraData={renderMode}
           renderItem={renderMessage}
           alignItemsAtEnd
           maintainScrollAtEnd

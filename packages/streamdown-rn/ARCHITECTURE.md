@@ -1,4 +1,4 @@
-# StreamdownRN v0.2.0 Architecture
+# StreamdownRN v0.2.1 Architecture
 
 ## Overview
 
@@ -7,6 +7,7 @@ High-performance streaming markdown renderer for React Native with:
 - **AST-based rendering** — Robust via remark + remark-gfm
 - **Block-level memoization** — Stable blocks never re-render
 - **Inline component support** — `[{c:"Name",p:{...}}]` syntax
+- **Custom renderers** — Override built-in rendering (e.g., code blocks)
 - **Full GFM support** — Tables, strikethrough, task lists, footnotes
 - **Syntax highlighting** — Prism-based, lightweight (~30KB)
 
@@ -47,11 +48,12 @@ Incoming stream: "# Hello\n\nSome **bold** text"
 
 ```
 src/
-├── __tests__/                        # Unit tests (201 tests)
+├── __tests__/                        # Unit tests (218 tests)
 │   ├── splitter.test.ts              # Block boundary detection
 │   ├── incomplete.test.ts            # Tag state tracking
 │   ├── parser.test.ts                # Remark/GFM parsing
 │   ├── component-extraction.test.ts  # Component syntax
+│   ├── custom-renderers.test.tsx     # Custom renderer data flow
 │   └── README.md                     # Test documentation
 │
 ├── components/                       # Reusable components
@@ -144,6 +146,48 @@ Via `remark-gfm`:
 - Autolinks (`www.example.com`)
 - Footnotes (`[^1]`)
 
+### 5. Custom Renderers
+
+Override built-in rendering for specific element types. Currently supports code blocks.
+
+```tsx
+import { StreamdownRN, type CodeBlockRendererProps } from 'streamdown-rn';
+
+function CustomCodeBlock({ code, language, theme }: CodeBlockRendererProps) {
+  return (
+    <View style={{ backgroundColor: theme.colors.codeBackground }}>
+      <Text style={{ color: theme.colors.muted }}>{language}</Text>
+      <Pressable onPress={() => Clipboard.setString(code)}>
+        <Text>Copy</Text>
+      </Pressable>
+      <Text style={{ fontFamily: 'monospace' }}>{code}</Text>
+    </View>
+  );
+}
+
+// Memoize renderers object for performance
+const renderers = { codeBlock: CustomCodeBlock };
+
+<StreamdownRN renderers={renderers}>
+  {markdownContent}
+</StreamdownRN>
+```
+
+**Props received by custom code block renderer:**
+- `code: string` — The code content (already parsed from markdown)
+- `language: string` — Language identifier (e.g., "typescript", "python", or "text")
+- `theme: ThemeConfig` — Current theme for consistent styling
+
+**Streaming behavior:**
+- Custom renderers work identically during streaming
+- The data layer handles incomplete markdown (auto-closing code fences)
+- Renderers just receive progressively longer `code` values
+- No special streaming logic needed in custom renderers
+
+**Performance note:**
+- Define renderer functions at module level (not inside components)
+- Memoize the `renderers` object to avoid unnecessary re-renders
+
 ---
 
 ## Performance Characteristics
@@ -172,7 +216,7 @@ Via `remark-gfm`:
 
 ```bash
 bun test
-# ✓ 201 tests passing
+# ✓ 218 tests passing
 ```
 
 **Test Coverage:**
@@ -180,6 +224,7 @@ bun test
 - Incomplete handler (tag state tracking, auto-close)
 - Parser (remark/GFM parsing)
 - Component extraction (syntax parsing, streaming)
+- Custom renderers (code block detection, streaming props)
 - Security (URL sanitization, XSS prevention)
 
 ---
