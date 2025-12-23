@@ -1,5 +1,5 @@
 import React from 'react';
-import { Lucide } from '@react-native-vector-icons/lucide';
+import { Lucide, type LucideIconName } from '@react-native-vector-icons/lucide';
 
 type IconProps = {
   name: string;
@@ -10,12 +10,12 @@ type IconProps = {
 
 /**
  * Icon component for mobile (iOS/Android) - uses Lucide font icons
- * 
+ *
  * Font icons are more performant on mobile than SVG rendering.
  * Icon names should match Lucide icon names (e.g., "plus", "chevron-right").
  */
 export function Icon({ name, size = 24, color = '#000', strokeWidth }: IconProps) {
   // Font icons don't support strokeWidth, but we accept it for API consistency
-  return <Lucide name={name.toLowerCase()} size={size} color={color} />;
+  return <Lucide name={name.toLowerCase() as LucideIconName} size={size} color={color} />;
 }
 

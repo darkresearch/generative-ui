@@ -1,4 +1,4 @@
-# StreamdownRN v0.2.0 Architecture
+# StreamdownRN v0.2.2 Architecture
 
 ## Overview
 
@@ -7,8 +7,10 @@ High-performance streaming markdown renderer for React Native with:
 - **AST-based rendering** — Robust via remark + remark-gfm
 - **Block-level memoization** — Stable blocks never re-render
 - **Inline component support** — `[{c:"Name",p:{...}}]` syntax
+- **Custom renderers** — Override all block-level elements (images, links, headings, tables, blockquotes, code blocks)
 - **Full GFM support** — Tables, strikethrough, task lists, footnotes
 - **Syntax highlighting** — Prism-based, lightweight (~30KB)
+- **FlashList/LegendList support** — `extraData` prop for virtualized list compatibility
 
 ---
 
@@ -47,11 +49,12 @@ Incoming stream: "# Hello\n\nSome **bold** text"
 
 ```
 src/
-├── __tests__/                        # Unit tests (201 tests)
+├── __tests__/                        # Unit tests (271 tests)
 │   ├── splitter.test.ts              # Block boundary detection
 │   ├── incomplete.test.ts            # Tag state tracking
 │   ├── parser.test.ts                # Remark/GFM parsing
 │   ├── component-extraction.test.ts  # Component syntax
+│   ├── custom-renderers.test.tsx     # Custom renderer data flow
 │   └── README.md                     # Test documentation
 │
 ├── components/                       # Reusable components
@@ -144,6 +147,100 @@ Via `remark-gfm`:
 - Autolinks (`www.example.com`)
 - Footnotes (`[^1]`)
 
+### 5. Custom Renderers
+
+Override built-in rendering for any block-level element type.
+
+**Supported elements:**
+
+| Element | Props Interface | Use Cases |
+|---------|-----------------|-----------|
+| `codeBlock` | `CodeBlockRendererProps` | Syntax highlighting, copy button |
+| `image` | `ImageRendererProps` | Lazy loading, lightbox, CDN transforms |
+| `link` | `LinkRendererProps` | In-app navigation, external handling |
+| `blockquote` | `BlockquoteRendererProps` | Callouts, admonitions (tips/warnings) |
+| `table` | `TableRendererProps` | Sortable/filterable, responsive |
+| `heading` | `HeadingRendererProps` | Anchor links, collapsible sections |
+
+```tsx
+import {
+  StreamdownRN,
+  type CodeBlockRendererProps,
+  type ImageRendererProps,
+  type LinkRendererProps,
+  type HeadingRendererProps,
+} from 'streamdown-rn';
+
+// Custom code block with copy button
+function CustomCodeBlock({ code, language, theme }: CodeBlockRendererProps) {
+  return (
+    <View style={{ backgroundColor: theme.colors.codeBackground }}>
+      <Text style={{ color: theme.colors.muted }}>{language}</Text>
+      <Pressable onPress={() => Clipboard.setString(code)}>
+        <Text>Copy</Text>
+      </Pressable>
+      <Text style={{ fontFamily: 'monospace' }}>{code}</Text>
+    </View>
+  );
+}
+
+// Custom image with lazy loading
+function CustomImage({ src, alt, theme }: ImageRendererProps) {
+  return <FastImage source={{ uri: src }} style={styles.image} />;
+}
+
+// Custom link with in-app navigation
+function CustomLink({ href, children, theme }: LinkRendererProps) {
+  const handlePress = () => {
+    if (href.startsWith('/')) {
+      navigation.navigate(href);
+    } else {
+      Linking.openURL(href);
+    }
+  };
+  return <Text onPress={handlePress} style={styles.link}>{children}</Text>;
+}
+
+// Custom heading with anchor links
+function CustomHeading({ level, children, theme }: HeadingRendererProps) {
+  const Tag = `h${level}`;
+  return <Text style={styles[Tag]}># {children}</Text>;
+}
+
+// Memoize renderers object for performance
+const renderers = {
+  codeBlock: CustomCodeBlock,
+  image: CustomImage,
+  link: CustomLink,
+  heading: CustomHeading,
+};
+
+<StreamdownRN renderers={renderers}>
+  {markdownContent}
+</StreamdownRN>
+```
+
+**Props received by each renderer:**
+
+| Renderer | Props |
+|----------|-------|
+| `codeBlock` | `code`, `language`, `theme`, `key` |
+| `image` | `src`, `alt?`, `title?`, `theme`, `key` |
+| `link` | `href`, `title?`, `children`, `theme`, `key` |
+| `blockquote` | `children`, `theme`, `key` |
+| `table` | `headers`, `rows`, `alignments`, `theme`, `key` |
+| `heading` | `level`, `children`, `theme`, `key` |
+
+**Streaming behavior:**
+- Custom renderers work identically during streaming
+- The data layer handles incomplete markdown (auto-closing code fences)
+- Renderers just receive progressively longer content
+- No special streaming logic needed in custom renderers
+
+**Performance note:**
+- Define renderer functions at module level (not inside components)
+- Memoize the `renderers` object to avoid unnecessary re-renders
+
 ---
 
 ## Performance Characteristics
@@ -172,7 +269,7 @@ Via `remark-gfm`:
 
 ```bash
 bun test
-# ✓ 201 tests passing
+# ✓ 271 tests passing
 ```
 
 **Test Coverage:**
@@ -180,6 +277,7 @@ bun test
 - Incomplete handler (tag state tracking, auto-close)
 - Parser (remark/GFM parsing)
 - Component extraction (syntax parsing, streaming)
+- Custom renderers (all 6 element types: code blocks, images, links, headings, tables, blockquotes)
 - Security (URL sanitization, XSS prevention)
 
 ---

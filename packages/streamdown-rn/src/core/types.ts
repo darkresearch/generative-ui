@@ -189,6 +189,168 @@ export interface ValidationResult {
 }
 
 // ============================================================================
+// Custom Renderers
+// ============================================================================
+
+/**
+ * Props passed to a custom code block renderer.
+ * Allows consumers to provide their own code block component.
+ */
+export interface CodeBlockRendererProps {
+  /** The code content (trailing newlines trimmed) */
+  code: string;
+  /** The language identifier (e.g., "typescript", "python", or "text" if none) */
+  language: string;
+  /** Current theme configuration for styling consistency */
+  theme: ThemeConfig;
+  /** React key for list rendering */
+  key?: string | number;
+}
+
+/**
+ * A custom renderer function for code blocks.
+ * Return a React node to render your custom code block.
+ */
+export type CodeBlockRenderer = (props: CodeBlockRendererProps) => ReactNode;
+
+/**
+ * Props passed to a custom image renderer.
+ */
+export interface ImageRendererProps {
+  /** Image source URL (already sanitized) */
+  src: string;
+  /** Alt text for accessibility */
+  alt?: string;
+  /** Title attribute */
+  title?: string;
+  /** Current theme configuration */
+  theme: ThemeConfig;
+  /** React key for list rendering */
+  key?: string | number;
+}
+
+/**
+ * A custom renderer function for images.
+ */
+export type ImageRenderer = (props: ImageRendererProps) => ReactNode;
+
+/**
+ * Props passed to a custom link renderer.
+ */
+export interface LinkRendererProps {
+  /** Link URL (already sanitized) */
+  href: string;
+  /** Title attribute */
+  title?: string;
+  /** Rendered link content (text or nested elements) */
+  children: ReactNode;
+  /** Current theme configuration */
+  theme: ThemeConfig;
+  /** React key for list rendering */
+  key?: string | number;
+}
+
+/**
+ * A custom renderer function for links.
+ */
+export type LinkRenderer = (props: LinkRendererProps) => ReactNode;
+
+/**
+ * Props passed to a custom blockquote renderer.
+ */
+export interface BlockquoteRendererProps {
+  /** Rendered blockquote content */
+  children: ReactNode;
+  /** Current theme configuration */
+  theme: ThemeConfig;
+  /** React key for list rendering */
+  key?: string | number;
+}
+
+/**
+ * A custom renderer function for blockquotes.
+ */
+export type BlockquoteRenderer = (props: BlockquoteRendererProps) => ReactNode;
+
+/**
+ * Props passed to a custom table renderer.
+ */
+export interface TableRendererProps {
+  /** Header cell contents (as rendered ReactNodes) */
+  headers: ReactNode[];
+  /** Body rows - array of cells (as rendered ReactNodes) */
+  rows: ReactNode[][];
+  /** Column alignments from GFM table syntax */
+  alignments: ('left' | 'center' | 'right' | null)[];
+  /** Current theme configuration */
+  theme: ThemeConfig;
+  /** React key for list rendering */
+  key?: string | number;
+}
+
+/**
+ * A custom renderer function for tables.
+ */
+export type TableRenderer = (props: TableRendererProps) => ReactNode;
+
+/**
+ * Props passed to a custom heading renderer.
+ */
+export interface HeadingRendererProps {
+  /** Heading level (1-6) */
+  level: 1 | 2 | 3 | 4 | 5 | 6;
+  /** Rendered heading content */
+  children: ReactNode;
+  /** Current theme configuration */
+  theme: ThemeConfig;
+  /** React key for list rendering */
+  key?: string | number;
+}
+
+/**
+ * A custom renderer function for headings.
+ */
+export type HeadingRenderer = (props: HeadingRendererProps) => ReactNode;
+
+/**
+ * Registry of custom renderers to override built-in rendering.
+ * Each renderer is optional — if not provided, the default renderer is used.
+ *
+ * @example
+ * ```tsx
+ * <StreamdownRN
+ *   renderers={{
+ *     codeBlock: ({ code, language, theme }) => (
+ *       <MyCodeBlock code={code} language={language} />
+ *     ),
+ *     image: ({ src, alt, theme }) => (
+ *       <MyImage src={src} alt={alt} />
+ *     ),
+ *     link: ({ href, children, theme }) => (
+ *       <MyLink href={href}>{children}</MyLink>
+ *     ),
+ *   }}
+ * >
+ *   {content}
+ * </StreamdownRN>
+ * ```
+ */
+export interface CustomRenderers {
+  /** Custom code block renderer (```code```) */
+  codeBlock?: CodeBlockRenderer;
+  /** Custom image renderer (![alt](src)) */
+  image?: ImageRenderer;
+  /** Custom link renderer ([text](href)) */
+  link?: LinkRenderer;
+  /** Custom blockquote renderer (> quote) */
+  blockquote?: BlockquoteRenderer;
+  /** Custom table renderer (GFM tables) */
+  table?: TableRenderer;
+  /** Custom heading renderer (# heading) */
+  heading?: HeadingRenderer;
+}
+
+// ============================================================================
 // Theme Configuration
 // ============================================================================
 
@@ -298,7 +460,7 @@ export interface StreamdownRNProps {
   style?: object;
   /** Error callback for component failures */
   onError?: (error: Error, componentName?: string) => void;
-  /** 
+  /**
    * Debug callback — called on every content update.
    * Use for observability, debugging, or testing.
    * Only enable in development to avoid performance overhead.
@@ -311,6 +473,11 @@ export interface StreamdownRNProps {
    * transition from skeleton to final state.
    */
   isComplete?: boolean;
+  /**
+   * Custom renderers to override built-in block rendering.
+   * Use this to provide your own code block component, etc.
+   */
+  renderers?: CustomRenderers;
 }
 
 /**

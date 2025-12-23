@@ -13,6 +13,7 @@
   },
   "include": [
     "**/*.ts",
-    "**/*.tsx"
+    "**/*.tsx",
+    "../../packages/streamdown-rn/src/types/**/*.d.ts"
   ]
 }

@@ -46,6 +46,7 @@ export const StreamdownRN: React.FC<StreamdownRNProps> = React.memo(({
   onError,
   onDebug,
   isComplete = false,
+  renderers,
 }) => {
   // Persistent registry reference — survives across renders
   const registryRef = useRef<BlockRegistry>(INITIAL_REGISTRY);
@@ -172,25 +173,28 @@ export const StreamdownRN: React.FC<StreamdownRNProps> = React.memo(({
           block={block}
           theme={themeConfig}
           componentRegistry={componentRegistry}
+          renderers={renderers}
         />
       ))}
-      
+
       {/* Active block — re-renders on each token */}
       <ActiveBlock
         block={registry.activeBlock}
         tagState={registry.activeTagState}
         theme={themeConfig}
         componentRegistry={componentRegistry}
+        renderers={renderers}
       />
     </View>
   );
 }, (prev, next) => {
   // Custom comparison for memo
-  // Re-render if content, theme, or isComplete changes
+  // Re-render if content, theme, isComplete, or renderers changes
   return (
     prev.children === next.children &&
     prev.theme === next.theme &&
-    prev.isComplete === next.isComplete
+    prev.isComplete === next.isComplete &&
+    prev.renderers === next.renderers
   );
 });
 

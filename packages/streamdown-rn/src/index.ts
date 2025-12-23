@@ -42,11 +42,30 @@ export {
 export type {
   // Component props
   StreamdownRNProps,
-  
+
   // Component injection (for custom component registries)
   ComponentDefinition,
   ComponentRegistry,
-  
+
+  // Custom renderers (for overriding built-in rendering)
+  CustomRenderers,
+  CodeBlockRenderer,
+  CodeBlockRendererProps,
+  ImageRenderer,
+  ImageRendererProps,
+  LinkRenderer,
+  LinkRendererProps,
+  BlockquoteRenderer,
+  BlockquoteRendererProps,
+  TableRenderer,
+  TableRendererProps,
+  HeadingRenderer,
+  HeadingRendererProps,
+
+  // Theme (for custom renderer styling)
+  ThemeConfig,
+  ThemeColors,
+
   // Debug/Observability
   DebugSnapshot,
 } from './core/types';

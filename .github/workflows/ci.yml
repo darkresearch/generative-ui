@@ -34,8 +34,22 @@ jobs:
       - name: Run tests
         run: bun run test
       
-      - name: Type check
-        run: bun run type-check
-      
-      - name: Build
-        run: bun run build
+      - name: Type check (strict - warnings are errors)
+        run: |
+          set -o pipefail
+          # Capture TypeScript output - any output indicates errors/warnings
+          output=$(bun run type-check 2>&1) || exit 1
+          if [ -n "$output" ] && echo "$output" | grep -qE "error TS|warning"; then
+            echo "$output"
+            exit 1
+          fi
+
+      - name: Build (strict - warnings are errors)
+        run: |
+          set -o pipefail
+          # Build and fail on any TypeScript errors/warnings
+          bun run build 2>&1 | tee build_output.txt
+          if grep -qE "error TS|warning" build_output.txt; then
+            echo "Build produced errors or warnings"
+            exit 1
+          fi
