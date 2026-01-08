@@ -1,6 +1,6 @@
 {
   "name": "galerie-rn",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "private": true,
   "description": "React Native spatial canvas library for LLM-generated UIs (experimental)",
   "main": "dist/index.js",

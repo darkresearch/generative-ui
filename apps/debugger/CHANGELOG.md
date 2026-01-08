@@ -1,5 +1,13 @@
 # @darkresearch/debugger
 
+## 0.2.2
+
+### Patch Changes
+
+- Updated dependencies [db4ce4c]
+  - @nansen-ai/streamdown-rn@0.2.2
+  - @darkresearch/debug-components@0.2.2
+
 ## 0.2.1
 
 ### Patch Changes

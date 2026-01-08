@@ -1,5 +1,11 @@
 # streamdown-rn
 
+## 0.2.2
+
+### Patch Changes
+
+- db4ce4c: feat: add patches
+
 ## 0.2.1
 
 ### Patch Changes

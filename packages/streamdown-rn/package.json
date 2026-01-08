@@ -1,6 +1,6 @@
 {
   "name": "@nansen-ai/streamdown-rn",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "High-performance streaming markdown renderer for React Native with dynamic component injection",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
